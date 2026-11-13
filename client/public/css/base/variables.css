@@ -1,0 +1,111 @@
+/* ==================== 1. VARIABLES & THEMES ==================== */
+:root {
+    /* Primary Academic Sapphire & Emerald Palette */
+    --primary-gradient: linear-gradient(135deg, #1d4ed8 0%, #0f766e 100%);
+    --primary-color: #1d4ed8;
+    --primary-hover: #1e40af;
+    --accent-color: #059669;
+    --accent-secondary: #0284c7;
+
+    /* Background System (Light Mode) */
+    --bg-body: #f4f7fb;
+    --bg-container: #ffffff;
+    --bg-messages: #f8fafd;
+    --bg-input-area: #f8fafc;
+    --bg-input: #f1f5f9;
+    --bg-hover: #eef2f7;
+    --bg-info: #eff6ff;
+    --bg-selected: #dbeafe;
+
+    /* Message Bubbles */
+    --bg-outgoing: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    --bg-incoming: #ffffff;
+    --bubble-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+
+    /* Text Colors */
+    --text-color: #0f172a;
+    --text-secondary: #475569;
+    --text-on-primary: #ffffff;
+    --placeholder: #94a3b8;
+
+    /* Math Theme */
+    --math-bg: linear-gradient(135deg, #dbeafe 0%, #d1fae5 100%);
+    --math-border: #93c5fd;
+    --math-shadow: 0 2px 8px rgba(29, 78, 216, 0.14);
+
+    /* UI Elements */
+    --modal-bg: #ffffff;
+    --modal-border: #e2e8f0;
+    --delete-bg: #dc2626;
+    --success-bg: #059669;
+    --secondary-bg: #475569;
+    --shadow: rgba(15, 23, 42, 0.08);
+    --shadow-lg: rgba(29, 78, 216, 0.16);
+
+    /* Radius */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 18px;
+    --radius-xl: 22px;
+
+    /* Layout sizing */
+    --app-gutter: clamp(12px, 3vw, 24px);
+    --app-max-width: 1200px;
+    --bubble-max-width: 780px;
+    --input-area-offset: clamp(104px, 13vh, 148px);
+
+    --z-back: -1;
+    --z-normal: 1;
+    --z-header: 100;
+    --z-input-area: 100;
+    --z-bottom-nav: 400;
+    --z-sidebar: 500;
+    --z-overlay: 900;
+    --z-modal: 1000;
+    --z-toast: 2000;
+    --z-keyboard: 99999;
+}
+
+.dark-mode {
+    --primary-gradient: linear-gradient(135deg, #2563eb 0%, #0d9488 100%);
+    --primary-color: #3b82f6;
+    --primary-hover: #2563eb;
+    --accent-color: #10b981;
+    --accent-secondary: #38bdf8;
+
+    --bg-body: #0b1120;
+    --bg-container: #111a2e;
+    --bg-messages: #0b1120;
+    --bg-input-area: #162032;
+    --bg-input: #1e293b;
+    --bg-hover: #1e293b;
+    --bg-info: #172554;
+    --bg-selected: #1e3a8a;
+
+    --bg-outgoing: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    --bg-incoming: #162032;
+    --bubble-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+
+    --text-color: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-on-primary: #ffffff;
+    --placeholder: #64748b;
+
+    --math-bg: linear-gradient(135deg, #1e3a8a 0%, #065f46 100%);
+    --math-border: #3b82f6;
+    --math-shadow: 0 2px 12px rgba(59, 130, 246, 0.25);
+
+    --modal-bg: #162032;
+    --modal-border: #26334d;
+    --delete-bg: #ef4444;
+    --success-bg: #10b981;
+    --secondary-bg: #475569;
+    --shadow: rgba(0, 0, 0, 0.45);
+    --shadow-lg: rgba(37, 99, 235, 0.25);
+}
+
+@media (max-width: 768px) {
+    :root {
+        --input-area-offset: 152px;
+    }
+}

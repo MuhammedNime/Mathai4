@@ -1,11 +1,18 @@
-<div align="center">
+# MathAI — المستشار الرياضي
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+تطبيق مساعد رياضيات عربي بواجهة React وVite، مع خادم Node.js وسيط لاتصال Gemini.
 
-  <h1>Built with AI Studio</h2>
+## التشغيل محلياً
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+1. ثبّت Node.js 18 أو أحدث.
+2. انسخ `.env.example` إلى `.env` وضع مفتاح Gemini في `API_KEY`.
+3. من مجلد المشروع شغّل:
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+```powershell
+npm install
+npm run start
+```
 
-</div>
+افتح `http://localhost:8787`. للتطوير السريع شغّل `node server/server.cjs` في نافذة، ثم `npm run dev` من `client` في نافذة ثانية.
+
+لا ترفع ملف `.env` أو مفاتيح API إلى Git.

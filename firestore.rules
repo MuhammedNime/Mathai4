@@ -1,0 +1,143 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global safety net: deny all reads and writes unless explicitly matched below
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedOwner(userId) {
+      return isSignedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.uid == userId;
+    }
+
+    function isValidSolvedProblem(data) {
+      return data.keys().hasAll([
+          'userId',
+          'question',
+          'answer',
+          'topic',
+          'source',
+          'isFavorite',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'userId',
+          'question',
+          'answer',
+          'finalResult',
+          'topic',
+          'source',
+          'stage',
+          'isFavorite',
+          'notes',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.userId is string
+        && isValidId(data.userId)
+        && data.userId == request.auth.uid
+        && data.question is string
+        && data.question.size() >= 1
+        && data.question.size() <= 2000
+        && data.answer is string
+        && data.answer.size() >= 1
+        && data.answer.size() <= 20000
+        && (!('finalResult' in data) || (data.finalResult is string && data.finalResult.size() <= 500))
+        && data.topic is string
+        && data.topic.size() >= 1
+        && data.topic.size() <= 40
+        && data.topic in ['algebra', 'calculus', 'geometry', 'statistics', 'matrix', 'units', 'general']
+        && data.source is string
+        && data.source.size() >= 1
+        && data.source.size() <= 20
+        && data.source in ['local', 'ai']
+        && (!('stage' in data) || (data.stage is string && data.stage.size() <= 40))
+        && data.isFavorite is bool
+        && (!('notes' in data) || (data.notes is string && data.notes.size() <= 1000))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSavedChat(data) {
+      return data.keys().hasAll(['title', 'history', 'createdAt'])
+        && data.keys().hasOnly(['title', 'history', 'isPinned', 'createdAt'])
+        && data.title is string
+        && data.title.size() >= 1
+        && data.title.size() <= 200
+        && data.history is list
+        && data.history.size() >= 1
+        && data.history.size() <= 200
+        && (!('isPinned' in data) || data.isPinned is bool)
+        && data.createdAt is timestamp;
+    }
+
+    match /users/{userId}/solvedProblems/{problemId} {
+      allow get: if isVerifiedOwner(userId) && isValidId(userId) && isValidId(problemId);
+      allow list: if isVerifiedOwner(userId) && resource.data.userId == request.auth.uid;
+      allow create: if isVerifiedOwner(userId)
+        && isValidId(userId)
+        && isValidId(problemId)
+        && isValidSolvedProblem(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedOwner(userId)
+        && isValidId(userId)
+        && isValidId(problemId)
+        && isValidSolvedProblem(incoming())
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['isFavorite', 'updatedAt'])
+          || incoming().diff(existing()).affectedKeys().hasOnly(['notes', 'updatedAt'])
+          || incoming().diff(existing()).affectedKeys().hasOnly(['isFavorite', 'notes', 'updatedAt'])
+        );
+      allow delete: if isVerifiedOwner(userId)
+        && isValidId(userId)
+        && isValidId(problemId)
+        && existing().userId == request.auth.uid;
+    }
+
+    match /userChats/{userId}/chats/{chatId} {
+      allow get: if isVerifiedOwner(userId) && isValidId(userId) && isValidId(chatId);
+      allow list: if isVerifiedOwner(userId);
+      allow create: if isVerifiedOwner(userId)
+        && isValidId(userId)
+        && isValidId(chatId)
+        && isValidSavedChat(incoming())
+        && incoming().createdAt == request.time;
+      allow update: if isVerifiedOwner(userId)
+        && isValidId(userId)
+        && isValidId(chatId)
+        && isValidSavedChat(incoming())
+        && incoming().createdAt == existing().createdAt
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['title', 'history'])
+          || incoming().diff(existing()).affectedKeys().hasOnly(['title'])
+          || incoming().diff(existing()).affectedKeys().hasOnly(['isPinned'])
+          || incoming().diff(existing()).affectedKeys().hasOnly(['title', 'history', 'isPinned'])
+        );
+      allow delete: if isVerifiedOwner(userId) && isValidId(userId) && isValidId(chatId);
+    }
+  }
+}

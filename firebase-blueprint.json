@@ -1,0 +1,137 @@
+{
+  "entities": {
+    "SolvedProblem": {
+      "title": "SolvedProblem",
+      "description": "A solved mathematics problem and its solution saved in a user's personal history.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "question": {
+          "type": "string",
+          "description": "The original math problem or expression entered by the user.",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "answer": {
+          "type": "string",
+          "description": "The formatted solution steps and explanation returned by the solver or AI.",
+          "minLength": 1,
+          "maxLength": 20000
+        },
+        "finalResult": {
+          "type": "string",
+          "description": "Short summary of the final result.",
+          "maxLength": 500
+        },
+        "topic": {
+          "type": "string",
+          "description": "Mathematical subject category.",
+          "enum": [
+            "algebra",
+            "calculus",
+            "geometry",
+            "statistics",
+            "matrix",
+            "units",
+            "general"
+          ],
+          "maxLength": 40
+        },
+        "source": {
+          "type": "string",
+          "description": "Whether solved by the local engine or AI.",
+          "enum": [
+            "local",
+            "ai"
+          ],
+          "maxLength": 20
+        },
+        "stage": {
+          "type": "string",
+          "description": "Educational stage selected when solving.",
+          "maxLength": 40
+        },
+        "isFavorite": {
+          "type": "boolean",
+          "description": "Whether the user bookmarked this solved problem."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional personal study note attached by the user.",
+          "maxLength": 1000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the problem was first saved."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of the latest modification."
+        }
+      },
+      "required": [
+        "userId",
+        "question",
+        "answer",
+        "topic",
+        "source",
+        "isFavorite",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "SavedChat": {
+      "title": "SavedChat",
+      "description": "A saved chat session belonging to a user.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Display title of the saved chat.",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "history": {
+          "type": "array",
+          "description": "Ordered chat message turns."
+        },
+        "isPinned": {
+          "type": "boolean",
+          "description": "Whether the chat is pinned."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the chat was saved."
+        }
+      },
+      "required": [
+        "title",
+        "history",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/solvedProblems/{problemId}": {
+      "schema": {
+        "$ref": "#/entities/SolvedProblem"
+      },
+      "description": "Per-user collection of solved math problems and solutions for later review."
+    },
+    "/userChats/{userId}/chats/{chatId}": {
+      "schema": {
+        "$ref": "#/entities/SavedChat"
+      },
+      "description": "Per-user collection of saved chat sessions."
+    }
+  }
+}

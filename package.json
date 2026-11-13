@@ -1,0 +1,17 @@
+{
+  "name": "workwithserver",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "postinstall": "cd client && npm install --include=dev",
+    "dev": "node -e \"if(!require('fs').existsSync('client/dist/index.html'))require('child_process').execSync('npm run build',{stdio:'inherit'})\" && node server/server.cjs",
+    "build": "cd client && npm run build",
+    "lint": "cd client && npm run lint",
+    "start": "npm run build && node server/server.cjs"
+  },
+  "dependencies": {
+    "@firebase/eslint-plugin-security-rules": "^0.0.2",
+    "@google/genai": "^3.3.0",
+    "firebase": "^13.3.0"
+  }
+}

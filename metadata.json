@@ -1,0 +1,8 @@
+{
+  "name": "Remix MathAI — المستشار الرياضي",
+  "description": "تطبيق مساعد رياضيات عربي لحل المسائل بالذكاء الاصطناعي.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

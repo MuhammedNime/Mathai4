@@ -1,0 +1,164 @@
+/* Input area layout */
+.chat-input-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    direction: ltr; /* enforce physical left/right positions */
+}
+
+.chat-input-center {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.chat-input-left {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: center;
+    flex: 0 0 auto;
+}
+
+.chat-input-right {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    flex: 0 0 auto;
+}
+
+.chat-input-area .action-btn {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    min-height: 42px;
+    border-radius: 14px;
+    padding: 0;
+    font-size: 18px;
+    box-shadow: 0 3px 10px var(--shadow-lg);
+}
+
+.chat-input-area .send-action-btn {
+    background: var(--primary-gradient);
+    color: #ffffff;
+}
+
+.chat-input-area .send-action-btn .send-icon-svg {
+    transform: scaleX(-1);
+}
+
+.chat-input-area .mic-action-btn {
+    background: var(--bg-input);
+    color: var(--text-color);
+    border: 1px solid var(--modal-border);
+    box-shadow: 0 2px 6px var(--shadow);
+}
+
+.chat-input-area .mic-action-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.chat-input-area .mic-action-btn .mic-icon-idle,
+.chat-input-area .mic-action-btn .mic-icon-recording {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chat-input-area .mic-action-btn .mic-icon-recording {
+    display: none;
+}
+
+.chat-input-area .mic-action-btn.is-recording {
+    background: rgba(220, 38, 38, 0.14);
+    border-color: rgba(220, 38, 38, 0.45);
+    color: var(--delete-bg);
+}
+
+.chat-input-area .mic-action-btn.is-recording .mic-icon-idle {
+    display: none;
+}
+
+.chat-input-area .mic-action-btn.is-recording .mic-icon-recording {
+    display: inline-flex;
+}
+
+.chat-input-area .plus-action-btn {
+    background: var(--primary-color);
+    color: #ffffff;
+}
+
+.chat-input-area .plus-action-btn .plus-icon-svg {
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.chat-input-area .plus-action-btn.is-open {
+    background: var(--delete-bg);
+    box-shadow: 0 4px 14px rgba(220, 38, 38, 0.28);
+}
+
+.chat-input-area .plus-action-btn.is-open .plus-icon-svg {
+    transform: rotate(45deg);
+}
+
+.chat-input-area .math-tool-btn {
+    padding: 5px 10px;
+    min-height: 30px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-left: 6px;
+}
+
+.math-tool-glyph {
+    font-family: 'IBM Plex Mono', serif;
+    font-style: italic;
+    font-size: 13.5px;
+    line-height: 1;
+}
+
+.chat-input-area .text-input-wrapper {
+    padding: 6px 10px;
+    min-height: 42px;
+    align-items: center;
+}
+
+#imageAttachedIndicator {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 7px 12px;
+    border-radius: 12px;
+    background: var(--bg-info);
+    border: 1px solid var(--math-border);
+    color: var(--primary-color);
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    position: static;
+    width: 100%;
+}
+
+.attachment-clear-btn {
+    background: rgba(220, 38, 38, 0.12);
+    color: var(--delete-bg);
+    border: 1px solid rgba(220, 38, 38, 0.28);
+    border-radius: 8px;
+    width: 24px;
+    height: 24px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.attachment-clear-btn:hover {
+    background: var(--delete-bg);
+    color: #ffffff;
+}
