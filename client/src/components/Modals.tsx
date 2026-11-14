@@ -689,240 +689,194 @@ export function MatrixWorkspaceModal() {
     <div className="app-modal" id="matrix-workspace-modal">
       <div className="modal-content workspace-modal-advanced sticky-footer mx-modal">
         <div className="modal-header mx-header">
-          <div className="mx-header-title">
-            <h3>مختبر الجبر الخطي والمصفوفات</h3>
-            <span className="mx-subtitle">حساب محلي فوري، تفكيكات متقدمة، وتقييم العبارات المصفوفية</span>
-          </div>
+          <h3>المصفوفات</h3>
           <button className="modal-close-btn" data-modal-id="matrix-workspace-modal" aria-label="إغلاق">
             &times;
           </button>
         </div>
 
-        <div className="modal-body">
-          <div className="mx-workbench">
-            {/* Operation Selector & Category Tabs */}
-            <section className="mx-section mx-op-section">
-              <div className="mx-cat-tabs" id="matrix-category-tabs" role="tablist" aria-label="تصنيف عمليات المصفوفات">
-                <button type="button" className="mx-cat-tab active" data-cat="all">الكل</button>
-                <button type="button" className="mx-cat-tab" data-cat="basic">الأساسية والعبارات</button>
-                <button type="button" className="mx-cat-tab" data-cat="algebra">الجبرية والمعكوس</button>
-                <button type="button" className="mx-cat-tab" data-cat="systems">الأنظمة والمعادلات</button>
-                <button type="button" className="mx-cat-tab" data-cat="spaces">الفضاءات والذاتية</button>
-                <button type="button" className="mx-cat-tab" data-cat="decomp">التفكيكات المتقدمة</button>
-                <button type="button" className="mx-cat-tab" data-cat="props">التحليل والخصائص</button>
-              </div>
+        <div className="modal-body mx-body">
+          <div className="matrix-workspace-body-vertical mx-workbench">
+            {/* Operation Selector Bar */}
+            <div className="mx-op-bar">
+              <select id="matrix-operation-select" className="matrix-operation-select mx-op-select" aria-label="العملية المطلوبة">
+                <optgroup label="العمليات الأساسية والتعبيرات">
+                  <option value="add" data-requires-b="true" data-requires-param="false">
+                    جمع مصفوفتين (A + B)
+                  </option>
+                  <option value="subtract" data-requires-b="true" data-requires-param="false">
+                    طرح مصفوفتين (A - B)
+                  </option>
+                  <option value="multiply" data-requires-b="true" data-requires-param="false">
+                    ضرب مصفوفتين (A × B)
+                  </option>
+                  <option value="scalarMultiply" data-requires-b="false" data-requires-param="true">
+                    ضرب في عدد قياسي (k · A)
+                  </option>
+                  <option value="power" data-requires-b="false" data-requires-param="true">
+                    قوة المصفوفة (Aⁿ)
+                  </option>
+                  <option value="matrixExpression" data-requires-b="false" data-optional-b="true" data-requires-expr="true">
+                    عبارة مصفوفية مخصصة (2*A^2 - 3*A + I)
+                  </option>
+                </optgroup>
 
-              <div className="mx-op-row">
-                <label htmlFor="matrix-operation-select" className="mx-op-label">العملية المطلوبة</label>
-                <select id="matrix-operation-select" className="matrix-operation-select mx-op-select">
-                  <optgroup label="العمليات الأساسية والتعبيرات" data-cat="basic">
-                    <option value="add" data-cat="basic" data-requires-b="true" data-requires-param="false">
-                      جمع مصفوفتين (A + B)
-                    </option>
-                    <option value="subtract" data-cat="basic" data-requires-b="true" data-requires-param="false">
-                      طرح مصفوفتين (A - B)
-                    </option>
-                    <option value="multiply" data-cat="basic" data-requires-b="true" data-requires-param="false">
-                      ضرب مصفوفتين (A × B)
-                    </option>
-                    <option value="scalarMultiply" data-cat="basic" data-requires-b="false" data-requires-param="true">
-                      ضرب في عدد قياسي (k · A)
-                    </option>
-                    <option value="power" data-cat="basic" data-requires-b="false" data-requires-param="true">
-                      قوة المصفوفة (A^n — تدعم الأس السالب)
-                    </option>
-                    <option value="matrixExpression" data-cat="basic" data-requires-b="false" data-optional-b="true" data-requires-expr="true">
-                      تقييم عبارة مصفوفية مخصصة (مثل 2*A^2 - 3*A + I)
-                    </option>
-                  </optgroup>
+                <optgroup label="الحسابات الجبرية والمعكوس">
+                  <option value="transA" data-requires-b="false" data-requires-param="false">
+                    منقول المصفوفة (Aᵀ)
+                  </option>
+                  <option value="detA" data-requires-b="false" data-requires-param="false">
+                    محدد المصفوفة det(A)
+                  </option>
+                  <option value="invA" data-requires-b="false" data-requires-param="false">
+                    معكوس المصفوفة (A⁻¹)
+                  </option>
+                  <option value="adjA" data-requires-b="false" data-requires-param="false">
+                    المصفوفة المرافقة adj(A)
+                  </option>
+                  <option value="traceA" data-requires-b="false" data-requires-param="false">
+                    أثر المصفوفة tr(A)
+                  </option>
+                  <option value="expA" data-requires-b="false" data-requires-param="false">
+                    الأسي للمصفوفة (e^A)
+                  </option>
+                </optgroup>
 
-                  <optgroup label="الحسابات الجبرية والمعكوس" data-cat="algebra">
-                    <option value="transA" data-cat="algebra" data-requires-b="false" data-requires-param="false">
-                      منقول المصفوفة (Aᵀ)
-                    </option>
-                    <option value="detA" data-cat="algebra" data-requires-b="false" data-requires-param="false">
-                      محدد المصفوفة det(A)
-                    </option>
-                    <option value="invA" data-cat="algebra" data-requires-b="false" data-requires-param="false">
-                      معكوس المصفوفة (A⁻¹)
-                    </option>
-                    <option value="adjA" data-cat="algebra" data-requires-b="false" data-requires-param="false">
-                      المصفوفة المرافقة adj(A)
-                    </option>
-                    <option value="traceA" data-cat="algebra" data-requires-b="false" data-requires-param="false">
-                      أثر المصفوفة tr(A)
-                    </option>
-                    <option value="expA" data-cat="algebra" data-requires-b="false" data-requires-param="false">
-                      الأسي للمصفوفة (e^A)
-                    </option>
-                  </optgroup>
+                <optgroup label="الأنظمة الخطية والمعادلات">
+                  <option value="rowEchelon" data-requires-b="false" data-requires-param="false">
+                    الشكل الصفي المختزل (RREF)
+                  </option>
+                  <option value="rankA" data-requires-b="false" data-requires-param="false">
+                    رتبة المصفوفة Rank(A)
+                  </option>
+                  <option value="solveSystem" data-requires-b="false" data-requires-c="true" data-requires-param="false">
+                    حل النظام الخطي Ax = b
+                  </option>
+                  <option value="solveMatrixEq" data-requires-b="true" data-requires-eq-mode="true" data-requires-param="false">
+                    المعادلة المصفوفية AX = B أو XA = B
+                  </option>
+                </optgroup>
 
-                  <optgroup label="الأنظمة الخطية والمعادلات المصفوفية" data-cat="systems">
-                    <option value="rowEchelon" data-cat="systems" data-requires-b="false" data-requires-param="false">
-                      الشكل الصفي المختزل (RREF) خطوة بخطوة
-                    </option>
-                    <option value="rankA" data-cat="systems" data-requires-b="false" data-requires-param="false">
-                      رتبة المصفوفة والبعد الصفري Rank(A)
-                    </option>
-                    <option
-                      value="solveSystem"
-                      data-cat="systems"
-                      data-requires-b="false"
-                      data-requires-c="true"
-                      data-requires-param="false"
-                    >
-                      حل النظام الخطي Ax = b (فريد / وسيطي / أقل مربعات)
-                    </option>
-                    <option
-                      value="solveMatrixEq"
-                      data-cat="systems"
-                      data-requires-b="true"
-                      data-requires-eq-mode="true"
-                      data-requires-param="false"
-                    >
-                      حل المعادلة المصفوفية AX = B أو XA = B
-                    </option>
-                  </optgroup>
+                <optgroup label="الفضاءات المتجهة والقيم الذاتية">
+                  <option value="eigen" data-requires-b="false" data-requires-param="false">
+                    القيم والمتجهات الذاتية
+                  </option>
+                  <option value="charPoly" data-requires-b="false" data-requires-param="false">
+                    كثيرة الحدود المميزة det(λI - A)
+                  </option>
+                  <option value="diagonalize" data-requires-b="false" data-requires-param="false">
+                    قطرنة المصفوفة (A = P D P⁻¹)
+                  </option>
+                  <option value="gramSchmidt" data-requires-b="false" data-requires-param="false">
+                    تعامد غرام-شميدت (Gram-Schmidt)
+                  </option>
+                  <option value="colSpace" data-requires-b="false" data-requires-param="false">
+                    أساس فضاء الأعمدة C(A)
+                  </option>
+                  <option value="rowSpace" data-requires-b="false" data-requires-param="false">
+                    أساس فضاء الصفوف R(A)
+                  </option>
+                  <option value="nullSpace" data-requires-b="false" data-requires-param="false">
+                    أساس الفضاء الصفري N(A)
+                  </option>
+                </optgroup>
 
-                  <optgroup label="الفضاءات المتجهة والقيم الذاتية" data-cat="spaces">
-                    <option value="eigen" data-cat="spaces" data-requires-b="false" data-requires-param="false">
-                      القيم والمتجهات الذاتية (حقيقية ومركبة)
-                    </option>
-                    <option value="charPoly" data-cat="spaces" data-requires-b="false" data-requires-param="false">
-                      كثيرة الحدود المميزة det(λI - A)
-                    </option>
-                    <option value="diagonalize" data-cat="spaces" data-requires-b="false" data-requires-param="false">
-                      قطرنة المصفوفة (A = P D P⁻¹)
-                    </option>
-                    <option value="gramSchmidt" data-cat="spaces" data-requires-b="false" data-requires-param="false">
-                      تعامد غرام-شميدت للأعمدة (Gram-Schmidt)
-                    </option>
-                    <option value="colSpace" data-cat="spaces" data-requires-b="false" data-requires-param="false">
-                      أساس فضاء الأعمدة C(A)
-                    </option>
-                    <option value="rowSpace" data-cat="spaces" data-requires-b="false" data-requires-param="false">
-                      أساس فضاء الصفوف R(A)
-                    </option>
-                    <option value="nullSpace" data-cat="spaces" data-requires-b="false" data-requires-param="false">
-                      أساس الفضاء الصفري N(A)
-                    </option>
-                  </optgroup>
+                <optgroup label="التفكيكات المصفوفية">
+                  <option value="lu" data-requires-b="false" data-requires-param="false">
+                    تفكيك LU (PA = LU)
+                  </option>
+                  <option value="qr" data-requires-b="false" data-requires-param="false">
+                    تفكيك QR (A = Q R)
+                  </option>
+                  <option value="cholesky" data-requires-b="false" data-requires-param="false">
+                    تفكيك Cholesky (A = L Lᵀ)
+                  </option>
+                  <option value="svd" data-requires-b="false" data-requires-param="false">
+                    تحليل القيم المفردة (SVD)
+                  </option>
+                  <option value="pseudoinverse" data-requires-b="false" data-requires-param="false">
+                    شبه المعكوس العام (A⁺)
+                  </option>
+                </optgroup>
 
-                  <optgroup label="التفكيكات المصفوفية المتقدمة" data-cat="decomp">
-                    <option value="lu" data-cat="decomp" data-requires-b="false" data-requires-param="false">
-                      تفكيك LU مع التبديل الجزئي (PA = LU)
-                    </option>
-                    <option value="qr" data-cat="decomp" data-requires-b="false" data-requires-param="false">
-                      تفكيك QR المتعامد (A = Q R)
-                    </option>
-                    <option value="cholesky" data-cat="decomp" data-requires-b="false" data-requires-param="false">
-                      تفكيك Cholesky (A = L Lᵀ للموجبة التعريف)
-                    </option>
-                    <option value="svd" data-cat="decomp" data-requires-b="false" data-requires-param="false">
-                      تحليل القيم المفردة (SVD: U Σ Vᵀ)
-                    </option>
-                    <option value="pseudoinverse" data-cat="decomp" data-requires-b="false" data-requires-param="false">
-                      شبه المعكوس العام Moore-Penrose (A⁺)
-                    </option>
-                  </optgroup>
-
-                  <optgroup label="الخصائص والتحليل الشامل" data-cat="props">
-                    <option value="comprehensive_analysis" data-cat="props" data-requires-b="false" data-requires-param="false">
-                      التحليل الطيفي والجبري الشامل للمصفوفة
-                    </option>
-                    <option value="norm" data-cat="props" data-requires-b="false" data-requires-param="false">
-                      معيار المصفوفة (Frobenius Norm)
-                    </option>
-                    <option value="conditionNumber" data-cat="props" data-requires-b="false" data-requires-param="false">
-                      رقم الشرط (Condition Number)
-                    </option>
-                    <option value="matrixType" data-cat="props" data-requires-b="false" data-requires-param="false">
-                      التصنيف البنيوي للمصفوفة (متناظرة، عمودية، SPD...)
-                    </option>
-                    <option value="density" data-cat="props" data-requires-b="false" data-requires-param="false">
-                      كثافة المصفوفة والتناثر (Density &amp; Sparsity)
-                    </option>
-                  </optgroup>
-                </select>
-              </div>
-
-              <div id="operation-description" className="mx-op-desc"></div>
+                <optgroup label="التحليل والخصائص">
+                  <option value="comprehensive_analysis" data-requires-b="false" data-requires-param="false">
+                    التحليل الشامل للمصفوفة
+                  </option>
+                  <option value="norm" data-requires-b="false" data-requires-param="false">
+                    معايير المصفوفة (Norms)
+                  </option>
+                  <option value="conditionNumber" data-requires-b="false" data-requires-param="false">
+                    رقم الشرط κ(A)
+                  </option>
+                  <option value="matrixType" data-requires-b="false" data-requires-param="false">
+                    التصنيف البنيوي للمصفوفة
+                  </option>
+                  <option value="density" data-requires-b="false" data-requires-param="false">
+                    كثافة المصفوفة والتناثر
+                  </option>
+                </optgroup>
+              </select>
 
               {/* Dynamic Parameter Strip */}
-              <div className="mx-context-strip">
-                <fieldset id="matrix-param-fieldset" className="mx-subpanel" style={{ display: "none" }}>
-                  <legend>إعداد المعامل</legend>
-                  <div className="matrix-controls mx-param-controls">
-                    <label id="matrix-param-label" htmlFor="matrix-param-input">العدد (k):</label>
-                    <input type="text" id="matrix-param-input" className="matrix-dim mx-param-input" defaultValue="2" dir="ltr" />
-                    <div id="matrix-power-presets" className="mx-quick-chips" style={{ display: "none" }}>
-                      <button type="button" className="mx-chip" data-param="-2">A⁻²</button>
-                      <button type="button" className="mx-chip" data-param="-1">A⁻¹</button>
-                      <button type="button" className="mx-chip" data-param="2">A²</button>
-                      <button type="button" className="mx-chip" data-param="3">A³</button>
-                    </div>
-                  </div>
-                </fieldset>
-
-                <fieldset id="matrix-eq-mode-fieldset" className="mx-subpanel" style={{ display: "none" }}>
-                  <legend>صيغة المعادلة المصفوفية</legend>
-                  <div className="mx-eq-mode-toggle">
-                    <label className="mx-radio-opt">
-                      <input type="radio" name="matrix-eq-mode" value="AX=B" defaultChecked />
-                      <span dir="ltr">A · X = B</span>
-                    </label>
-                    <label className="mx-radio-opt">
-                      <input type="radio" name="matrix-eq-mode" value="XA=B" />
-                      <span dir="ltr">X · A = B</span>
-                    </label>
-                  </div>
-                </fieldset>
-
-                <fieldset id="matrix-expr-fieldset" className="mx-subpanel" style={{ display: "none" }}>
-                  <legend>العبارة المصفوفية (استخدم A, B, I, trans, inv, adj, pinv, exp)</legend>
-                  <div className="mx-expr-wrap">
-                    <input
-                      type="text"
-                      id="matrix-expression-input"
-                      className="mx-expr-input"
-                      dir="ltr"
-                      defaultValue="2*A^2 - 3*A + 5*I"
-                      placeholder="مثال: 2*A^2 - 3*A + 5*I  أو  inv(A)*B - trans(A)"
-                    />
-                    <div className="mx-expr-templates">
-                      <button type="button" className="mx-chip" data-expr="A^2 - 3*A + 2*I" dir="ltr">A² - 3A + 2I</button>
-                      <button type="button" className="mx-chip" data-expr="A*B - B*A" data-needs-b="true" dir="ltr">AB - BA</button>
-                      <button type="button" className="mx-chip" data-expr="inv(A)*B" data-needs-b="true" dir="ltr">A⁻¹B</button>
-                      <button type="button" className="mx-chip" data-expr="trans(A)*A" dir="ltr">AᵀA</button>
-                    </div>
-                  </div>
-                </fieldset>
-              </div>
-            </section>
-
-            {/* Matrix Grids Workbench */}
-            <div className="mx-matrices-grid" id="matrix-cards-container">
-              {/* Matrix A Card */}
-              <fieldset className="mx-card" id="matrix-a-fieldset">
-                <div className="mx-card-header">
-                  <div className="mx-card-title-group">
-                    <span className="mx-card-badge">A</span>
-                    <span className="mx-card-title">المصفوفة A</span>
-                    <span className="mx-dim-badge" id="matrix-a-size-label" dir="ltr">3 × 3</span>
-                  </div>
-                  <div className="mx-size-presets" data-matrix="A">
-                    <button type="button" className="mx-size-btn" data-matrix="A" data-rows="2" data-cols="2" dir="ltr">2×2</button>
-                    <button type="button" className="mx-size-btn active" data-matrix="A" data-rows="3" data-cols="3" dir="ltr">3×3</button>
-                    <button type="button" className="mx-size-btn" data-matrix="A" data-rows="4" data-cols="4" dir="ltr">4×4</button>
+              <div id="matrix-param-fieldset" className="mx-inline-subpanel" style={{ display: "none" }}>
+                <div className="mx-param-row">
+                  <label id="matrix-param-label" htmlFor="matrix-param-input">العدد (k):</label>
+                  <input type="text" id="matrix-param-input" className="matrix-dim mx-param-input" defaultValue="2" dir="ltr" />
+                  <div id="matrix-power-presets" className="mx-quick-chips" style={{ display: "none" }}>
+                    <button type="button" className="mx-chip" data-param="-2" dir="ltr">A⁻²</button>
+                    <button type="button" className="mx-chip" data-param="-1" dir="ltr">A⁻¹</button>
+                    <button type="button" className="mx-chip" data-param="2" dir="ltr">A²</button>
+                    <button type="button" className="mx-chip" data-param="3" dir="ltr">A³</button>
                   </div>
                 </div>
+              </div>
 
-                <div className="matrix-controls mx-card-dims" id="matrix-a-controls">
-                  <div className="mx-dim-field">
-                    <label>صفوف</label>
+              <div id="matrix-eq-mode-fieldset" className="mx-inline-subpanel" style={{ display: "none" }}>
+                <div className="mx-eq-mode-toggle">
+                  <span className="mx-sub-title">الصيغة:</span>
+                  <label className="mx-radio-opt">
+                    <input type="radio" name="matrix-eq-mode" value="AX=B" defaultChecked />
+                    <span dir="ltr">A·X = B</span>
+                  </label>
+                  <label className="mx-radio-opt">
+                    <input type="radio" name="matrix-eq-mode" value="XA=B" />
+                    <span dir="ltr">X·A = B</span>
+                  </label>
+                </div>
+              </div>
+
+              <div id="matrix-expr-fieldset" className="mx-inline-subpanel" style={{ display: "none" }}>
+                <div className="mx-expr-wrap">
+                  <input
+                    type="text"
+                    id="matrix-expression-input"
+                    className="mx-expr-input"
+                    dir="ltr"
+                    defaultValue="2*A^2 - 3*A + 5*I"
+                    placeholder="2*A^2 - 3*A + 5*I  أو  inv(A)*B"
+                  />
+                  <div className="mx-expr-templates">
+                    <button type="button" className="mx-chip" data-expr="A^2 - 3*A + 2*I" dir="ltr">A²-3A+2I</button>
+                    <button type="button" className="mx-chip" data-expr="A*B - B*A" data-needs-b="true" dir="ltr">AB-BA</button>
+                    <button type="button" className="mx-chip" data-expr="inv(A)*B" data-needs-b="true" dir="ltr">A⁻¹B</button>
+                    <button type="button" className="mx-chip" data-expr="trans(A)*A" dir="ltr">AᵀA</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Matrices Stage */}
+            <div className="mx-matrices-grid" id="matrix-cards-container">
+              {/* Matrix A Card */}
+              <div className="mx-card" id="matrix-a-fieldset">
+                <div className="mx-card-top" id="matrix-a-controls">
+                  <span className="mx-card-title" dir="ltr">A</span>
+                  <div className="mx-dims-inline">
                     <input
                       type="number"
-                      className="matrix-dim"
+                      aria-label="صفوف المصفوفة A"
+                      className="matrix-dim mx-dim-input"
                       data-matrix="A"
                       data-dim="rows"
                       min={1}
@@ -930,13 +884,11 @@ export function MatrixWorkspaceModal() {
                       defaultValue={3}
                       dir="ltr"
                     />
-                  </div>
-                  <span className="mx-dim-x" aria-hidden="true">×</span>
-                  <div className="mx-dim-field">
-                    <label>أعمدة</label>
+                    <span className="mx-dim-x" aria-hidden="true">×</span>
                     <input
                       type="number"
-                      className="matrix-dim"
+                      aria-label="أعمدة المصفوفة A"
+                      className="matrix-dim mx-dim-input"
                       data-matrix="A"
                       data-dim="cols"
                       min={1}
@@ -945,65 +897,63 @@ export function MatrixWorkspaceModal() {
                       dir="ltr"
                     />
                   </div>
+                  <details className="mx-tools-drawer">
+                    <summary className="mx-tools-summary">أدوات ▾</summary>
+                    <div className="mx-tools-menu">
+                      <div className="mx-size-presets" data-matrix="A">
+                        <button type="button" className="mx-size-btn" data-matrix="A" data-rows="2" data-cols="2" dir="ltr">2×2</button>
+                        <button type="button" className="mx-size-btn active" data-matrix="A" data-rows="3" data-cols="3" dir="ltr">3×3</button>
+                        <button type="button" className="mx-size-btn" data-matrix="A" data-rows="4" data-cols="4" dir="ltr">4×4</button>
+                      </div>
+                      <div className="mx-fill-bar" data-matrix="A">
+                        <button type="button" className="mx-tool-btn" data-matrix="A" data-fill="identity">I</button>
+                        <button type="button" className="mx-tool-btn" data-matrix="A" data-fill="zero">0</button>
+                        <button type="button" className="mx-tool-btn" data-matrix="A" data-fill="random">عشوائية</button>
+                        <button type="button" className="mx-tool-btn" data-matrix="A" data-fill="symmetric">متناظرة</button>
+                        <button type="button" className="mx-tool-btn" data-matrix="A" data-fill="transpose" dir="ltr">Aᵀ</button>
+                        <button type="button" className="mx-tool-btn mx-tool-import" data-matrix="A" data-action="toggle-import">لصق</button>
+                      </div>
+                      <div className="mx-import-box" id="matrix-a-import-box" style={{ display: "none" }}>
+                        <textarea
+                          id="matrix-a-import-text"
+                          className="mx-import-textarea"
+                          rows={2}
+                          dir="ltr"
+                          placeholder="[[2,-1,0],[-1,2,-1],[0,-1,2]]"
+                        />
+                        <div className="mx-import-actions">
+                          <button type="button" className="mx-apply-import-btn" data-matrix="A">تطبيق</button>
+                        </div>
+                      </div>
+                    </div>
+                  </details>
                 </div>
 
-                <div className="mx-fill-bar" data-matrix="A">
-                  <button type="button" className="mx-tool-btn" data-matrix="A" data-fill="identity">وحدة I</button>
-                  <button type="button" className="mx-tool-btn" data-matrix="A" data-fill="zero">أصفار</button>
-                  <button type="button" className="mx-tool-btn" data-matrix="A" data-fill="random">عشوائية</button>
-                  <button type="button" className="mx-tool-btn" data-matrix="A" data-fill="symmetric">متناظرة</button>
-                  <button type="button" className="mx-tool-btn" data-matrix="A" data-fill="transpose">تبديل Aᵀ</button>
-                  <button type="button" className="mx-tool-btn mx-tool-import" data-matrix="A" data-action="toggle-import">لصق نص/LaTeX</button>
-                </div>
-
-                <div className="mx-import-box" id="matrix-a-import-box" style={{ display: "none" }}>
-                  <textarea
-                    id="matrix-a-import-text"
-                    className="mx-import-textarea"
-                    rows={3}
-                    dir="ltr"
-                    placeholder="أدخل مصفوفة مثل: [[2,-1,0],[-1,2,-1],[0,-1,2]] أو 2 -1 0; -1 2 -1; 0 -1 2"
-                  />
-                  <div className="mx-import-actions">
-                    <button type="button" className="mx-apply-import-btn" data-matrix="A">تطبيق على A</button>
+                <div className="mx-matrix-stage">
+                  <div className="mx-matrix-frame">
+                    <div className="mx-bracket mx-bracket-left" aria-hidden="true"></div>
+                    <div id="matrix-a-grid" className="mx-grid-inner"></div>
+                    <div className="mx-bracket mx-bracket-right" aria-hidden="true"></div>
                   </div>
                 </div>
-
-                <div className="mx-matrix-frame">
-                  <div className="mx-bracket mx-bracket-left" aria-hidden="true"></div>
-                  <div id="matrix-a-grid" className="matrix-grid-container mx-grid-inner"></div>
-                  <div className="mx-bracket mx-bracket-right" aria-hidden="true"></div>
-                </div>
-              </fieldset>
+              </div>
 
               {/* Swap Button between A and B */}
               <div className="mx-swap-col" id="matrix-swap-col" style={{ display: "none" }}>
-                <button type="button" id="matrix-swap-ab-btn" className="mx-swap-btn" title="تبديل المصفوفة A مع B">
+                <button type="button" id="matrix-swap-ab-btn" className="mx-swap-btn" title="تبديل A مع B">
                   <span dir="ltr">A ⇄ B</span>
                 </button>
               </div>
 
               {/* Matrix B Card */}
-              <fieldset id="matrix-b-fieldset" className="mx-card" style={{ display: "none" }}>
-                <div className="mx-card-header">
-                  <div className="mx-card-title-group">
-                    <span className="mx-card-badge mx-card-badge-b">B</span>
-                    <span className="mx-card-title">المصفوفة B</span>
-                    <span className="mx-dim-badge" id="matrix-b-size-label" dir="ltr">3 × 3</span>
-                  </div>
-                  <div className="mx-size-presets" data-matrix="B">
-                    <button type="button" className="mx-size-btn" data-matrix="B" data-rows="2" data-cols="2" dir="ltr">2×2</button>
-                    <button type="button" className="mx-size-btn active" data-matrix="B" data-rows="3" data-cols="3" dir="ltr">3×3</button>
-                    <button type="button" className="mx-size-btn" data-matrix="B" data-rows="4" data-cols="4" dir="ltr">4×4</button>
-                  </div>
-                </div>
-
-                <div className="matrix-controls mx-card-dims" id="matrix-b-controls">
-                  <div className="mx-dim-field">
-                    <label>صفوف</label>
+              <div id="matrix-b-fieldset" className="mx-card" style={{ display: "none" }}>
+                <div className="mx-card-top" id="matrix-b-controls">
+                  <span className="mx-card-title" dir="ltr">B</span>
+                  <div className="mx-dims-inline">
                     <input
                       type="number"
-                      className="matrix-dim"
+                      aria-label="صفوف المصفوفة B"
+                      className="matrix-dim mx-dim-input"
                       data-matrix="B"
                       data-dim="rows"
                       min={1}
@@ -1011,13 +961,11 @@ export function MatrixWorkspaceModal() {
                       defaultValue={3}
                       dir="ltr"
                     />
-                  </div>
-                  <span className="mx-dim-x" aria-hidden="true">×</span>
-                  <div className="mx-dim-field">
-                    <label>أعمدة</label>
+                    <span className="mx-dim-x" aria-hidden="true">×</span>
                     <input
                       type="number"
-                      className="matrix-dim"
+                      aria-label="أعمدة المصفوفة B"
+                      className="matrix-dim mx-dim-input"
                       data-matrix="B"
                       data-dim="cols"
                       min={1}
@@ -1026,52 +974,55 @@ export function MatrixWorkspaceModal() {
                       dir="ltr"
                     />
                   </div>
+                  <details className="mx-tools-drawer">
+                    <summary className="mx-tools-summary">أدوات ▾</summary>
+                    <div className="mx-tools-menu">
+                      <div className="mx-size-presets" data-matrix="B">
+                        <button type="button" className="mx-size-btn" data-matrix="B" data-rows="2" data-cols="2" dir="ltr">2×2</button>
+                        <button type="button" className="mx-size-btn active" data-matrix="B" data-rows="3" data-cols="3" dir="ltr">3×3</button>
+                        <button type="button" className="mx-size-btn" data-matrix="B" data-rows="4" data-cols="4" dir="ltr">4×4</button>
+                      </div>
+                      <div className="mx-fill-bar" data-matrix="B">
+                        <button type="button" className="mx-tool-btn" data-matrix="B" data-fill="identity">I</button>
+                        <button type="button" className="mx-tool-btn" data-matrix="B" data-fill="zero">0</button>
+                        <button type="button" className="mx-tool-btn" data-matrix="B" data-fill="random">عشوائية</button>
+                        <button type="button" className="mx-tool-btn" data-matrix="B" data-fill="transpose" dir="ltr">Bᵀ</button>
+                        <button type="button" className="mx-tool-btn mx-tool-import" data-matrix="B" data-action="toggle-import">لصق</button>
+                      </div>
+                      <div className="mx-import-box" id="matrix-b-import-box" style={{ display: "none" }}>
+                        <textarea
+                          id="matrix-b-import-text"
+                          className="mx-import-textarea"
+                          rows={2}
+                          dir="ltr"
+                          placeholder="[[1,0],[0,1]]"
+                        />
+                        <div className="mx-import-actions">
+                          <button type="button" className="mx-apply-import-btn" data-matrix="B">تطبيق</button>
+                        </div>
+                      </div>
+                    </div>
+                  </details>
                 </div>
 
-                <div className="mx-fill-bar" data-matrix="B">
-                  <button type="button" className="mx-tool-btn" data-matrix="B" data-fill="identity">وحدة I</button>
-                  <button type="button" className="mx-tool-btn" data-matrix="B" data-fill="zero">أصفار</button>
-                  <button type="button" className="mx-tool-btn" data-matrix="B" data-fill="random">عشوائية</button>
-                  <button type="button" className="mx-tool-btn" data-matrix="B" data-fill="transpose">تبديل Bᵀ</button>
-                  <button type="button" className="mx-tool-btn mx-tool-import" data-matrix="B" data-action="toggle-import">لصق نص/LaTeX</button>
-                </div>
-
-                <div className="mx-import-box" id="matrix-b-import-box" style={{ display: "none" }}>
-                  <textarea
-                    id="matrix-b-import-text"
-                    className="mx-import-textarea"
-                    rows={3}
-                    dir="ltr"
-                    placeholder="أدخل مصفوفة B مثل: [[1,0],[0,1]] أو 1 0; 0 1"
-                  />
-                  <div className="mx-import-actions">
-                    <button type="button" className="mx-apply-import-btn" data-matrix="B">تطبيق على B</button>
+                <div className="mx-matrix-stage">
+                  <div className="mx-matrix-frame">
+                    <div className="mx-bracket mx-bracket-left" aria-hidden="true"></div>
+                    <div id="matrix-b-grid" className="mx-grid-inner"></div>
+                    <div className="mx-bracket mx-bracket-right" aria-hidden="true"></div>
                   </div>
                 </div>
-
-                <div className="mx-matrix-frame">
-                  <div className="mx-bracket mx-bracket-left" aria-hidden="true"></div>
-                  <div id="matrix-b-grid" className="matrix-grid-container mx-grid-inner"></div>
-                  <div className="mx-bracket mx-bracket-right" aria-hidden="true"></div>
-                </div>
-              </fieldset>
+              </div>
 
               {/* Vector b Card for Ax = b */}
-              <fieldset id="matrix-c-fieldset" className="mx-card mx-card-vector" style={{ display: "none" }}>
-                <div className="mx-card-header">
-                  <div className="mx-card-title-group">
-                    <span className="mx-card-badge mx-card-badge-c">b</span>
-                    <span className="mx-card-title">متجه الثوابت b</span>
-                    <span className="mx-dim-badge" id="matrix-c-size-label" dir="ltr">3 × 1</span>
-                  </div>
-                </div>
-
-                <div className="matrix-controls mx-card-dims" id="matrix-c-controls">
-                  <div className="mx-dim-field">
-                    <label>الصفوف</label>
+              <div id="matrix-c-fieldset" className="mx-card mx-card-vector" style={{ display: "none" }}>
+                <div className="mx-card-top" id="matrix-c-controls">
+                  <span className="mx-card-title" dir="ltr">b</span>
+                  <div className="mx-dims-inline">
                     <input
                       type="number"
-                      className="matrix-dim"
+                      aria-label="صفوف المتجه b"
+                      className="matrix-dim mx-dim-input"
                       data-matrix="C"
                       data-dim="rows"
                       min={1}
@@ -1079,13 +1030,11 @@ export function MatrixWorkspaceModal() {
                       defaultValue={3}
                       dir="ltr"
                     />
-                  </div>
-                  <span className="mx-dim-x" aria-hidden="true">×</span>
-                  <div className="mx-dim-field">
-                    <label>الأعمدة</label>
+                    <span className="mx-dim-x" aria-hidden="true">×</span>
                     <input
                       type="number"
-                      className="matrix-dim"
+                      aria-label="أعمدة المتجه b"
+                      className="matrix-dim mx-dim-input"
                       data-matrix="C"
                       data-dim="cols"
                       min={1}
@@ -1095,25 +1044,31 @@ export function MatrixWorkspaceModal() {
                       dir="ltr"
                     />
                   </div>
+                  <details className="mx-tools-drawer">
+                    <summary className="mx-tools-summary">أدوات ▾</summary>
+                    <div className="mx-tools-menu">
+                      <div className="mx-fill-bar mx-fill-inline" data-matrix="C">
+                        <button type="button" className="mx-tool-btn" data-matrix="C" data-fill="zero">0</button>
+                        <button type="button" className="mx-tool-btn" data-matrix="C" data-fill="random">عشوائي</button>
+                      </div>
+                    </div>
+                  </details>
                 </div>
 
-                <div className="mx-fill-bar" data-matrix="C">
-                  <button type="button" className="mx-tool-btn" data-matrix="C" data-fill="zero">أصفار</button>
-                  <button type="button" className="mx-tool-btn" data-matrix="C" data-fill="random">عشوائي</button>
+                <div className="mx-matrix-stage">
+                  <div className="mx-matrix-frame">
+                    <div className="mx-bracket mx-bracket-left" aria-hidden="true"></div>
+                    <div id="matrix-c-grid" className="mx-grid-inner"></div>
+                    <div className="mx-bracket mx-bracket-right" aria-hidden="true"></div>
+                  </div>
                 </div>
-
-                <div className="mx-matrix-frame">
-                  <div className="mx-bracket mx-bracket-left" aria-hidden="true"></div>
-                  <div id="matrix-c-grid" className="matrix-grid-container mx-grid-inner"></div>
-                  <div className="mx-bracket mx-bracket-right" aria-hidden="true"></div>
-                </div>
-              </fieldset>
+              </div>
             </div>
 
             {/* Instant Local Preview Output Panel */}
             <section id="matrix-instant-preview" className="mx-preview-panel" style={{ display: "none" }}>
               <div className="mx-preview-header">
-                <span className="mx-preview-title" id="matrix-preview-title">معاينة الحل المحلي</span>
+                <span className="mx-preview-title" id="matrix-preview-title">معاينة الحل</span>
                 <span className="mx-preview-confidence" id="matrix-preview-confidence"></span>
               </div>
               <div className="mx-preview-math" id="matrix-preview-math" dir="ltr"></div>
@@ -1124,10 +1079,10 @@ export function MatrixWorkspaceModal() {
 
         <div className="modal-footer modal-buttons compact-footer mx-footer">
           <button type="button" id="matrix-preview-btn" className="btn btn-secondary mx-btn-secondary">
-            <span className="btn-label">معاينة فورية محلياً</span>
+            <span className="btn-label">معاينة</span>
           </button>
           <button type="button" id="matrix-send-to-chat-btn" className="btn btn-primary mx-btn-primary">
-            <span className="btn-label">حل وعرض الخطوات في المحادثة</span>
+            <span className="btn-label">احسب الحل</span>
           </button>
         </div>
       </div>

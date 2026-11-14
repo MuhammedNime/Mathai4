@@ -3,9 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "postinstall": "cd client && npm install --include=dev",
+    "postinstall": "node -e \"const fs=require('fs'),cp=require('child_process');if(fs.existsSync('client/package.json')){try{cp.execSync('npm --prefix client install --include=dev --no-audit --no-fund',{stdio:'inherit'})}catch{cp.execSync('bun install --cwd client',{stdio:'inherit'})}}\"",
     "dev": "node -e \"if(!require('fs').existsSync('client/dist/index.html'))require('child_process').execSync('npm run build',{stdio:'inherit'})\" && node server/server.cjs",
-    "build": "cd client && npm run build",
+    "build": "node -e \"const fs=require('fs'),cp=require('child_process');if(!fs.existsSync('client/node_modules/vite/package.json')){try{cp.execSync('npm --prefix client install --include=dev --no-audit --no-fund',{stdio:'inherit'})}catch{cp.execSync('bun install --cwd client',{stdio:'inherit'})}}\" && cd client && npm run build",
     "lint": "cd client && npm run lint",
     "start": "npm run build && node server/server.cjs"
   },

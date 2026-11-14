@@ -458,9 +458,10 @@ math-field { width: 100%; font-size: 1.35rem; min-height: 60px; padding: 10px 14
     box-shadow: 0 0 0 1px var(--primary-color);
 }
 
-/* ==================== REDESIGNED MATRIX WORKBENCH ==================== */
+/* ==================== MINIMALIST MATRIX WORKBENCH ==================== */
 .mx-modal {
-    max-width: 1180px !important;
+    max-width: 920px !important;
+    width: min(94vw, 920px) !important;
     padding: 0 !important;
     border: 1px solid var(--modal-border);
 }
@@ -469,168 +470,114 @@ math-field { width: 100%; font-size: 1.35rem; min-height: 60px; padding: 10px 14
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 20px;
+    padding: 12px 16px !important;
+    margin-bottom: 0 !important;
     border-bottom: 1px solid var(--modal-border);
     background: var(--bg-container);
 }
 
-.mx-header-title {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.mx-header-title h3 {
+.mx-header h3 {
     margin: 0;
-    font-size: 1.08rem;
+    font-size: 1.02rem;
     font-weight: 700;
     color: var(--text-color);
 }
 
-.mx-subtitle {
-    font-size: 0.78rem;
-    color: var(--text-secondary);
+.mx-body {
+    padding: 0 !important;
+    display: flex;
+    flex-direction: column;
 }
 
 .mx-workbench {
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    padding: 16px 20px;
+    gap: 14px !important;
+    padding: 14px 16px 24px !important;
+    flex: 1 1 auto;
 }
 
-.mx-section {
-    background: var(--bg-input-area);
-    border: 1px solid var(--modal-border);
-    border-radius: 12px;
-    padding: 12px 14px;
-}
-
-.mx-cat-tabs {
+.mx-op-bar {
     display: flex;
-    flex-wrap: nowrap;
-    gap: 6px;
-    overflow-x: auto;
-    padding-bottom: 10px;
-    margin-bottom: 12px;
-    border-bottom: 1px solid var(--modal-border);
-    scrollbar-width: thin;
-}
-
-.mx-cat-tab {
-    flex: 0 0 auto;
-    border: 1px solid transparent;
-    background: transparent;
-    color: var(--text-secondary);
-    font-size: 0.82rem;
-    font-weight: 600;
-    padding: 6px 11px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-    white-space: nowrap;
-}
-
-.mx-cat-tab:hover {
-    background: var(--bg-hover);
-    color: var(--text-color);
-}
-
-.mx-cat-tab.active {
-    background: var(--bg-selected);
-    color: var(--primary-color);
-    border-color: var(--primary-color);
-}
-
-.mx-op-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px;
-}
-
-.mx-op-label {
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: var(--text-color);
-    flex-shrink: 0;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
 }
 
 .mx-op-select {
-    flex: 1 1 280px;
-    min-width: 0;
-    padding: 9px 12px !important;
-    font-size: 0.92rem;
+    width: 100%;
+    padding: 10px 12px !important;
+    font-size: 0.94rem;
     font-weight: 600;
     border: 1px solid var(--modal-border) !important;
-    border-radius: 8px !important;
-    background-color: var(--bg-container) !important;
+    border-radius: 10px !important;
+    background-color: var(--bg-input-area) !important;
     color: var(--text-color) !important;
 }
 
 .mx-op-select:focus {
     outline: none;
     border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.14);
 }
 
-.mx-op-desc {
-    margin-top: 8px;
-    font-size: 0.82rem;
-    color: var(--text-secondary);
-    padding: 6px 10px;
-    border-inline-start: 3px solid var(--primary-color);
-    background: var(--bg-container);
-    border-radius: 6px;
+.mx-inline-subpanel {
+    padding: 8px 10px;
+    border: 1px solid var(--modal-border);
+    border-radius: 8px;
+    background: var(--bg-input-area);
 }
 
-.mx-context-strip:empty {
-    display: none;
+.mx-param-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
-.mx-subpanel {
-    margin: 10px 0 0 0 !important;
-    padding: 10px 12px !important;
-    border: 1px solid var(--modal-border) !important;
-    border-radius: 10px !important;
-    background: var(--bg-container) !important;
-}
-
-.mx-subpanel legend {
+.mx-param-row label,
+.mx-sub-title {
     font-size: 0.8rem;
     font-weight: 700;
-    color: var(--primary-color);
-    padding: 0 6px;
-}
-
-.mx-param-controls {
-    margin-top: 4px !important;
-    gap: 10px !important;
+    color: var(--text-color);
 }
 
 .mx-param-input {
-    width: 110px;
-    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    width: 96px !important;
+    padding: 5px 8px !important;
+    font-family: ui-monospace, 'IBM Plex Mono', monospace;
     font-variant-numeric: tabular-nums;
+    font-weight: 600;
 }
 
 .mx-quick-chips,
 .mx-expr-templates {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 5px;
+}
+
+.mx-chip,
+.mx-size-btn,
+.mx-tool-btn,
+.mx-swap-btn,
+.mx-apply-import-btn {
+    appearance: none;
+    -webkit-appearance: none;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
 
 .mx-chip {
     border: 1px solid var(--modal-border);
-    background: var(--bg-input-area);
+    background: var(--bg-container);
     color: var(--text-color);
-    font-family: ui-monospace, 'JetBrains Mono', monospace;
-    font-size: 0.78rem;
+    font-family: ui-monospace, 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
     font-weight: 600;
-    padding: 4px 10px;
+    padding: 3px 8px;
     border-radius: 6px;
-    cursor: pointer;
-    transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
 .mx-chip:hover {
@@ -641,39 +588,40 @@ math-field { width: 100%; font-size: 1.35rem; min-height: 60px; padding: 10px 14
 
 .mx-eq-mode-toggle {
     display: flex;
-    gap: 12px;
+    align-items: center;
+    gap: 8px;
     flex-wrap: wrap;
 }
 
 .mx-radio-opt {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
+    gap: 5px;
+    padding: 4px 10px;
     border: 1px solid var(--modal-border);
-    border-radius: 8px;
-    background: var(--bg-input-area);
+    border-radius: 7px;
+    background: var(--bg-container);
     cursor: pointer;
-    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-family: ui-monospace, 'IBM Plex Mono', monospace;
     font-weight: 600;
-    font-size: 0.88rem;
+    font-size: 0.84rem;
 }
 
 .mx-expr-wrap {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
 }
 
 .mx-expr-input {
     width: 100%;
-    padding: 9px 12px;
+    padding: 7px 10px;
     border: 1px solid var(--modal-border);
-    border-radius: 8px;
+    border-radius: 7px;
     background: var(--bg-input);
     color: var(--text-color);
-    font-family: ui-monospace, 'JetBrains Mono', monospace;
-    font-size: 0.92rem;
+    font-family: ui-monospace, 'IBM Plex Mono', monospace;
+    font-size: 0.88rem;
 }
 
 .mx-expr-input:focus {
@@ -685,8 +633,9 @@ math-field { width: 100%; font-size: 1.35rem; min-height: 60px; padding: 10px 14
 .mx-matrices-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 14px;
-    align-items: start;
+    gap: 12px;
+    align-items: stretch;
+    flex: 1 1 auto;
 }
 
 .mx-matrices-grid.has-secondary {
@@ -694,87 +643,120 @@ math-field { width: 100%; font-size: 1.35rem; min-height: 60px; padding: 10px 14
 }
 
 .mx-matrices-grid.has-vector {
-    grid-template-columns: minmax(0, 1.55fr) minmax(240px, 0.85fr);
+    grid-template-columns: minmax(0, 1.55fr) minmax(200px, 0.75fr);
 }
 
 .mx-card {
-    background: var(--bg-container) !important;
-    border: 1px solid var(--modal-border) !important;
-    border-radius: 12px !important;
-    padding: 14px !important;
-    margin: 0 !important;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-container);
+    border: 1px solid var(--modal-border);
+    border-radius: 12px;
     min-width: 0;
+    overflow: visible;
 }
 
-.mx-card-header {
+.mx-card-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 8px;
-    margin-bottom: 10px;
-}
-
-.mx-card-title-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.mx-card-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 26px;
-    height: 26px;
-    border-radius: 7px;
-    background: var(--primary-color);
-    color: #fff;
-    font-family: ui-monospace, 'JetBrains Mono', monospace;
-    font-weight: 700;
-    font-size: 0.86rem;
-}
-
-.mx-card-badge-b {
-    background: var(--accent-color, #0284c7);
-}
-
-.mx-card-badge-c {
-    background: #0d9488;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--modal-border);
 }
 
 .mx-card-title {
-    font-weight: 700;
-    font-size: 0.94rem;
-    color: var(--text-color);
+    font-family: ui-monospace, 'IBM Plex Mono', monospace;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--primary-color);
+    min-width: 18px;
 }
 
-.mx-dim-badge {
-    font-family: ui-monospace, 'JetBrains Mono', monospace;
+.mx-dims-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+
+.mx-dim-input {
+    width: 48px !important;
+    height: 32px;
+    padding: 2px 4px !important;
+    font-family: ui-monospace, 'IBM Plex Mono', monospace;
     font-variant-numeric: tabular-nums;
-    font-size: 0.78rem;
-    color: var(--text-secondary);
-    background: var(--bg-input-area);
+    font-size: 0.88rem !important;
+    font-weight: 700;
     border: 1px solid var(--modal-border);
-    padding: 2px 7px;
-    border-radius: 6px;
+    border-radius: 7px;
+    background: var(--bg-input);
+    color: var(--text-color);
+    text-align: center;
+}
+
+.mx-dim-x {
+    color: var(--text-secondary);
+    font-family: ui-monospace, monospace;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.mx-tools-drawer {
+    position: relative;
+}
+
+.mx-tools-summary {
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    padding: 5px 10px;
+    border: 1px solid var(--modal-border);
+    border-radius: 7px;
+    background: var(--bg-input-area);
+}
+
+.mx-tools-summary::-webkit-details-marker {
+    display: none;
+}
+
+.mx-tools-drawer[open] .mx-tools-summary {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.mx-tools-menu {
+    margin-top: 8px;
+    padding: 8px;
+    border: 1px solid var(--modal-border);
+    border-radius: 9px;
+    background: var(--bg-input-area);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 .mx-size-presets {
-    display: flex;
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
     gap: 4px;
 }
 
 .mx-size-btn {
     border: 1px solid var(--modal-border);
-    background: var(--bg-input-area);
+    background: var(--bg-container);
     color: var(--text-secondary);
-    font-family: ui-monospace, 'JetBrains Mono', monospace;
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-family: ui-monospace, 'IBM Plex Mono', monospace;
+    font-size: 0.74rem;
+    font-weight: 700;
     padding: 3px 8px;
     border-radius: 6px;
-    cursor: pointer;
+    line-height: 1.25;
 }
 
 .mx-size-btn:hover,
@@ -784,59 +766,26 @@ math-field { width: 100%; font-size: 1.35rem; min-height: 60px; padding: 10px 14
     background: var(--bg-selected);
 }
 
-.mx-card-dims {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 0 !important;
-    margin-bottom: 10px;
-}
-
-.mx-dim-field {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.mx-dim-field label {
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-}
-
-.mx-dim-field .matrix-dim {
-    width: 60px;
-    padding: 5px 6px;
-    font-family: ui-monospace, 'JetBrains Mono', monospace;
-    font-variant-numeric: tabular-nums;
-    font-weight: 600;
-}
-
-.mx-dim-x {
-    color: var(--text-secondary);
-    font-family: ui-monospace, monospace;
-    font-weight: 700;
-}
-
 .mx-fill-bar {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--modal-border);
-    margin-bottom: 10px;
+    align-items: center;
+    gap: 4px;
+}
+
+.mx-fill-inline {
+    margin-bottom: 0;
 }
 
 .mx-tool-btn {
     border: 1px solid var(--modal-border);
-    background: var(--bg-input-area);
-    color: var(--text-secondary);
-    font-size: 0.76rem;
+    background: var(--bg-container);
+    color: var(--text-color);
+    font-size: 0.74rem;
     font-weight: 600;
     padding: 4px 8px;
     border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.15s ease;
+    line-height: 1.25;
 }
 
 .mx-tool-btn:hover {
@@ -845,58 +794,64 @@ math-field { width: 100%; font-size: 1.35rem; min-height: 60px; padding: 10px 14
     background: var(--bg-selected);
 }
 
-.mx-tool-import {
-    margin-inline-start: auto;
-}
-
 .mx-import-box {
-    margin-bottom: 10px;
-    padding: 8px;
+    padding: 6px;
     border: 1px solid var(--modal-border);
-    border-radius: 8px;
-    background: var(--bg-input-area);
+    border-radius: 7px;
+    background: var(--bg-container);
 }
 
 .mx-import-textarea {
     width: 100%;
-    padding: 8px;
+    padding: 6px 8px;
     border: 1px solid var(--modal-border);
     border-radius: 6px;
     background: var(--bg-input);
     color: var(--text-color);
-    font-family: ui-monospace, 'JetBrains Mono', monospace;
-    font-size: 0.82rem;
+    font-family: ui-monospace, 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
     resize: vertical;
 }
 
 .mx-import-actions {
     display: flex;
     justify-content: flex-end;
-    margin-top: 6px;
+    margin-top: 5px;
 }
 
 .mx-apply-import-btn {
     border: 1px solid var(--primary-color);
     background: var(--primary-color);
     color: #fff;
-    font-size: 0.78rem;
-    font-weight: 600;
-    padding: 5px 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 10px;
     border-radius: 6px;
-    cursor: pointer;
 }
 
-/* Matrix Bracket Frame */
+/* Spacious Centered Matrix Bracket Stage */
+.mx-matrix-stage {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 22px 12px 42px;
+    min-height: 220px;
+}
+
 .mx-matrix-frame {
     display: flex;
     align-items: stretch;
     justify-content: center;
-    padding: 6px 4px;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 2px 0;
     overflow-x: auto;
 }
 
 .mx-bracket {
-    width: 9px;
+    width: 8px;
     flex-shrink: 0;
     border: 2px solid var(--text-secondary);
 }
@@ -912,31 +867,29 @@ math-field { width: 100%; font-size: 1.35rem; min-height: 60px; padding: 10px 14
 }
 
 .mx-grid-inner {
-    width: auto !important;
-    max-width: 100%;
-    padding: 4px 8px !important;
+    padding: 4px 8px;
     direction: ltr;
 }
 
-.mx-card .matrix-cell {
-    width: 58px;
-    height: 38px;
-    font-family: ui-monospace, 'JetBrains Mono', monospace;
+#matrix-workspace-modal .matrix-cell {
+    width: 56px;
+    height: 42px;
+    font-family: ui-monospace, 'IBM Plex Mono', monospace;
     font-variant-numeric: tabular-nums;
-    font-size: 0.9rem;
+    font-size: 0.94rem;
     font-weight: 600;
-    padding: 4px 6px;
+    padding: 2px 4px;
     border: 1px solid var(--modal-border);
-    border-radius: 6px;
+    border-radius: 8px;
     background: var(--bg-input);
     color: var(--text-color);
-    transition: border-color 0.12s ease, box-shadow 0.12s ease;
+    text-align: center;
 }
 
-.mx-card .matrix-cell:focus {
+#matrix-workspace-modal .matrix-cell:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 79, 70, 229), 0.18);
+    box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.16);
 }
 
 .mx-swap-col {
@@ -948,14 +901,13 @@ math-field { width: 100%; font-size: 1.35rem; min-height: 60px; padding: 10px 14
 
 .mx-swap-btn {
     border: 1px solid var(--modal-border);
-    background: var(--bg-container);
+    background: var(--bg-input-area);
     color: var(--text-color);
-    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-family: ui-monospace, 'IBM Plex Mono', monospace;
     font-weight: 700;
-    font-size: 0.82rem;
-    padding: 8px 12px;
-    border-radius: 8px;
-    cursor: pointer;
+    font-size: 0.78rem;
+    padding: 5px 10px;
+    border-radius: 7px;
     white-space: nowrap;
 }
 
@@ -969,26 +921,26 @@ math-field { width: 100%; font-size: 1.35rem; min-height: 60px; padding: 10px 14
 .mx-preview-panel {
     background: var(--bg-input-area);
     border: 1px solid var(--primary-color);
-    border-radius: 12px;
-    padding: 12px 14px;
+    border-radius: 10px;
+    padding: 10px 12px;
 }
 
 .mx-preview-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 8px;
+    gap: 8px;
+    margin-bottom: 6px;
 }
 
 .mx-preview-title {
     font-weight: 700;
-    font-size: 0.92rem;
+    font-size: 0.88rem;
     color: var(--primary-color);
 }
 
 .mx-preview-confidence {
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     font-weight: 700;
     color: var(--text-secondary);
 }
@@ -996,34 +948,40 @@ math-field { width: 100%; font-size: 1.35rem; min-height: 60px; padding: 10px 14
 .mx-preview-math {
     background: var(--bg-container);
     border: 1px solid var(--modal-border);
-    border-radius: 8px;
-    padding: 10px 12px;
+    border-radius: 7px;
+    padding: 8px 10px;
     overflow-x: auto;
     text-align: center;
 }
 
 .mx-preview-notes {
-    margin-top: 8px;
-    font-size: 0.82rem;
+    margin-top: 6px;
+    font-size: 0.78rem;
     color: var(--text-secondary);
-    line-height: 1.5;
+    line-height: 1.45;
 }
 
-/* Footer Split Buttons */
+/* Footer */
 .mx-footer {
+    display: flex !important;
+    align-items: center;
+    flex-wrap: nowrap !important;
     gap: 10px !important;
-    padding: 10px 20px calc(10px + env(safe-area-inset-bottom)) !important;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom)) !important;
     border-top: 1px solid var(--modal-border);
     background: var(--bg-container);
 }
 
 .mx-btn-secondary {
-    flex: 0 0 auto;
-    min-width: 165px;
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 104px !important;
+    height: 44px;
+    padding: 0 14px !important;
     background: var(--bg-input-area) !important;
     color: var(--text-color) !important;
     border: 1px solid var(--modal-border) !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important;
 }
 
 .mx-btn-secondary:hover {
@@ -1032,30 +990,38 @@ math-field { width: 100%; font-size: 1.35rem; min-height: 60px; padding: 10px 14
 }
 
 .mx-btn-primary {
-    flex: 1 1 auto;
+    flex: 1 1 auto !important;
+    width: auto !important;
+    height: 44px;
+    padding: 0 16px !important;
     font-weight: 700 !important;
 }
 
 /* Dark Mode Refinements */
-.dark-mode .mx-section,
+.dark-mode .mx-card {
+    background: rgba(15, 23, 42, 0.72);
+}
+
+.dark-mode .mx-tools-menu {
+    background: rgba(15, 23, 42, 0.9);
+}
+
 .dark-mode .mx-preview-panel {
     background: rgba(255, 255, 255, 0.03);
 }
 
-.dark-mode .mx-card,
-.dark-mode .mx-subpanel,
-.dark-mode .mx-op-desc,
 .dark-mode .mx-preview-math {
-    background: rgba(15, 23, 42, 0.72) !important;
+    background: rgba(15, 23, 42, 0.78);
 }
 
-.dark-mode .mx-card .matrix-cell {
+.dark-mode #matrix-workspace-modal .matrix-cell,
+.dark-mode .mx-dim-input {
     background: rgba(30, 41, 59, 0.85);
     color: #f1f5f9;
 }
 
-/* Mobile Responsive Matrix Workbench */
-@media (max-width: 900px) {
+/* Mobile & Tablet Responsive */
+@media (max-width: 860px) {
     .mx-matrices-grid.has-secondary,
     .mx-matrices-grid.has-vector {
         grid-template-columns: minmax(0, 1fr);
@@ -1067,39 +1033,37 @@ math-field { width: 100%; font-size: 1.35rem; min-height: 60px; padding: 10px 14
 }
 
 @media (max-width: 768px) {
-    .mx-workbench {
-        padding: 10px 12px;
-        gap: 10px;
+    .mx-modal {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        border-radius: 0 !important;
     }
 
     .mx-header {
-        padding: 10px 14px;
+        padding: 10px 14px !important;
     }
 
-    .mx-subtitle {
-        display: none;
+    .mx-workbench {
+        padding: 12px 12px 28px !important;
+        gap: 12px !important;
     }
 
-    .mx-card .matrix-cell {
-        width: 44px !important;
-        height: 36px !important;
-        font-size: 13px !important;
+    .mx-card-top {
+        padding: 8px 12px !important;
     }
 
-    .mx-card-dims {
-        flex-direction: row !important;
-        padding: 0 !important;
-        background: transparent !important;
+    .mx-matrix-stage {
+        padding: 20px 8px 48px !important;
+        min-height: 240px;
     }
 
-    .mx-footer {
-        padding: 8px 12px calc(8px + env(safe-area-inset-bottom)) !important;
-        gap: 8px !important;
-    }
-
-    .mx-btn-secondary {
-        min-width: 120px;
-        flex: 0 0 auto;
+    #matrix-workspace-modal .matrix-cell {
+        width: 48px !important;
+        height: 38px !important;
+        font-size: 14px !important;
     }
 }
+
 

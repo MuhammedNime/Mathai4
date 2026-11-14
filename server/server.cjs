@@ -506,7 +506,10 @@ const serveStatic = (req, res) => {
 
   const ext = path.extname(resolvedPath).toLowerCase();
   const contentType = contentTypes[ext] || 'application/octet-stream';
-  res.writeHead(200, { 'Content-Type': contentType });
+  const cacheControl = filePath.startsWith('/assets/')
+    ? 'public, max-age=31536000, immutable'
+    : 'no-cache, must-revalidate';
+  res.writeHead(200, { 'Content-Type': contentType, 'Cache-Control': cacheControl });
   if (req.method === 'HEAD') return res.end();
   fs.createReadStream(resolvedPath).pipe(res);
 };

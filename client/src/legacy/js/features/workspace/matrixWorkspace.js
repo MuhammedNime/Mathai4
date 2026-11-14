@@ -116,6 +116,8 @@ export const MatrixWorkspace = {
                 const r = parseInt(sizeBtn.dataset.rows, 10);
                 const c = parseInt(sizeBtn.dataset.cols, 10);
                 if (mat && r && c) this.setMatrixDimensions(mat, r, c);
+                const drawer = sizeBtn.closest('.mx-tools-drawer');
+                if (drawer) drawer.open = false;
                 return;
             }
 
@@ -126,6 +128,8 @@ export const MatrixWorkspace = {
                     this.toggleImportBox(mat);
                 } else if (toolBtn.dataset.fill) {
                     this.applyMatrixPreset(mat, toolBtn.dataset.fill);
+                    const drawer = toolBtn.closest('.mx-tools-drawer');
+                    if (drawer) drawer.open = false;
                 }
                 return;
             }
@@ -133,6 +137,8 @@ export const MatrixWorkspace = {
             const applyImportBtn = e.target.closest('.mx-apply-import-btn');
             if (applyImportBtn) {
                 this.applyImportedText(applyImportBtn.dataset.matrix);
+                const drawer = applyImportBtn.closest('.mx-tools-drawer');
+                if (drawer) drawer.open = false;
                 return;
             }
 
@@ -337,7 +343,7 @@ export const MatrixWorkspace = {
 
     updateDimUI(matrixId, rows, cols) {
         const badge = document.getElementById(`matrix-${matrixId.toLowerCase()}-size-label`);
-        if (badge) badge.textContent = `${rows} × ${cols}`;
+        if (badge) badge.textContent = `${rows}×${cols}`;
 
         document.querySelectorAll(`.mx-size-btn[data-matrix="${matrixId}"]`).forEach((btn) => {
             const br = parseInt(btn.dataset.rows, 10);
@@ -842,7 +848,7 @@ export const MatrixWorkspace = {
         grid.innerHTML = '';
         grid.style.display = 'grid';
         grid.style.gridTemplateColumns = `repeat(${cols}, auto)`;
-        grid.style.gap = '6px';
+        grid.style.gap = cols > 5 ? '5px' : '8px';
 
         const oldMatrix = this.state[matrixId] || [];
         this.state[matrixId] = Array.from({ length: rows }, (_, i) =>

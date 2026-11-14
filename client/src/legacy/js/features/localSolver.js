@@ -912,9 +912,10 @@ export const localSolver = {
                     } catch (e) {
                         addCheck(null, 'التحقق من كثيرة الحدود المميزة', 'تعذر التحقق');
                     }
-                } else if (op === 'nullSpace' && A && raw && Array.isArray(raw.basis)) {
+                } else if (op === 'nullSpace' && A && raw && Array.isArray(raw.nullSpaceBasis || raw.basis)) {
                     try {
-                        const ok = raw.basis.every(v => {
+                        const nBasis = raw.nullSpaceBasis || raw.basis;
+                        const ok = nBasis.every(v => {
                             const Av = matrixToArray(math.multiply(A, v)).flat();
                             return Av.every(x => Math.abs(x) < 1e-4);
                         });

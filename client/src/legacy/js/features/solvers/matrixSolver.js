@@ -274,15 +274,21 @@ export const matrixSolver = {
                 case 'transA':
                     return this.basicOperations.transpose.generateSteps?.(context.A) || [];
                 case 'detA':
-                    return this.determinant.laplace?.generateSteps?.(context.A) || [];
+                    return this.determinant.generateMultiMethodSteps?.(context.A) || this.determinant.generateSteps?.(context.A, 'auto') || [];
                 case 'invA':
-                    return this.inverse.gaussJordan?.generateSteps?.(context.A) || [];
+                    return this.inverse.generateMultiMethodSteps?.(context.A) || this.inverse.gaussJordan?.generateSteps?.(context.A) || [];
                 case 'adjA':
-                    return this.inverse.adjugate?.generateSteps?.(context.A) || [];
+                    return [];
                 case 'traceA':
                     return this.basicOperations.trace.generateSteps?.(context.A) || [];
                 case 'rankA':
                     return this.rankNullity.rank.generateSteps?.(context.A) || [];
+                case 'lu':
+                    return this.decompositions.lu.generateSteps?.(context.A) || [];
+                case 'qr':
+                    return this.decompositions.qr.generateSteps?.(context.A) || [];
+                case 'cholesky':
+                    return this.decompositions.cholesky.generateSteps?.(context.A) || [];
                 case 'rowEchelon':
                 case 'solveSystem':
                 case 'svd':
@@ -296,9 +302,6 @@ export const matrixSolver = {
                 case 'density':
                 case 'matrixExpression':
                 case 'eigen':
-                case 'lu':
-                case 'qr':
-                case 'cholesky':
                 case 'comprehensive_analysis':
                     return [];
                 case 'colSpace':
@@ -308,7 +311,7 @@ export const matrixSolver = {
                 case 'nullSpace':
                     return this.rankNullity.nullSpace.generateSteps?.(context.A) || [];
                 case 'norm':
-                    return this.norms.frobenius.generateSteps?.(context.A) || [];
+                    return this.norms.generateMultiNormSteps?.(context.A) || [];
                 case 'conditionNumber':
                     return this.conditionNumber.generateSteps?.(context.A) || [];
                 default:
@@ -323,7 +326,7 @@ export const matrixSolver = {
     composeNarrativeSteps(meta, context, technicalSteps = []) {
         const steps = [];
         steps.push({
-            explanation: `👋 أنا المستشار الرياضي، ${meta.intro || 'لنحل هذه المسألة معاً خطوة بخطوة.'}`
+            explanation: `👋 ${meta.intro || 'لنحل هذه المسألة معاً خطوة بخطوة.'}`
         });
     
         const dimensionPieces = [];
@@ -338,7 +341,7 @@ export const matrixSolver = {
         }
         if (dimensionPieces.length) {
             steps.push({
-                explanation: `🔎 بدأت بمراجعة الأبعاد: ${dimensionPieces.join('، ')}${meta.dimensionNote ? ` — ${meta.dimensionNote}` : ''}`
+                explanation: `🔎 الأبعاد المدخلة: ${dimensionPieces.join('، ')}${meta.dimensionNote ? ` — ${meta.dimensionNote}` : ''}`
             });
         }
     
@@ -348,7 +351,7 @@ export const matrixSolver = {
             });
         }
     
-        const MAX_TECH_STEPS = 14;
+        const MAX_TECH_STEPS = 80;
         const trimmed = Array.isArray(technicalSteps) ? technicalSteps.slice(0, MAX_TECH_STEPS) : [];
     
         trimmed.forEach((step) => {
@@ -366,6 +369,14 @@ export const matrixSolver = {
                 }
                 equationText = normalized;
             }
+
+            if (typeof explanationText === 'string' && explanationText.trim().startsWith('<')) {
+                steps.push({
+                    explanation: explanationText,
+                    equation: equationText
+                });
+                return;
+            }
     
             steps.push({
                 explanation: `${meta.stepPrefix || '🧮'} ${explanationText}`,
@@ -375,7 +386,7 @@ export const matrixSolver = {
     
         if (Array.isArray(technicalSteps) && technicalSteps.length > MAX_TECH_STEPS) {
             steps.push({
-                explanation: '📌 تم اختصار بعض الخطوات المتكررة للحفاظ على وضوح العرض.'
+                explanation: '📌 تم الاكتفاء بأهم الخطوات بعد عرض 80 خطوة تفصيلية.'
             });
         }
     
@@ -676,16 +687,16 @@ export const matrixSolver = {
          * الحصول على صف
          */
         getRow(matrix, row) {
-            const { cols } = this.getDimensions(matrix);
-            return math.subset(matrix, math.index(row, math.range(0, cols)));
+            const arr = math.isMatrix(matrix) ? matrix.toArray() : matrix;
+            return math.matrix([arr[row].slice()]);
         },
         
         /**
          * الحصول على عمود
          */
         getColumn(matrix, col) {
-            const { rows } = this.getDimensions(matrix);
-            return math.subset(matrix, math.index(math.range(0, rows), col));
+            const arr = math.isMatrix(matrix) ? matrix.toArray() : matrix;
+            return math.matrix(arr.map(r => [r[col]]));
         },
         
         /**
@@ -1410,52 +1421,75 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
             generateSteps(A, n) {
                 const steps = [];
                 const matA = matrixSolver.utils.toMatrix(A);
+                const powerN = Number.isFinite(parseInt(n, 10)) ? parseInt(n, 10) : 2;
 
                 steps.push({
-                    explanation: `حساب $A^{${n}}$`,
+                    explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:10px;">الطريقة 1: الحساب المباشر / التربيع الثنائي لـ A^(${powerN})</h3>`,
                     equation: `A = ${matrixSolver.utils.toLatex(matA)}`
                 });
 
-                const solved = this.solve(A, n);
+                const solved = this.solve(A, powerN);
                 if (!solved.success) {
                     steps.push({ explanation: solved.error });
                     return steps;
                 }
 
-                if (n === 0) {
+                if (powerN === 0) {
                     steps.push({
-                        explanation: 'أي مصفوفة مربعة مرفوعة للقوة 0 تساوي مصفوفة الوحدة',
-                        equation: `A^0 = I`
+                        explanation: 'أي مصفوفة مربعة غير صفرية مرفوعة للقوة 0 تساوي مصفوفة الوحدة:',
+                        equation: `A^0 = I = ${matrixSolver.utils.toLatex(solved.result)}`
                     });
-                } else if (n < 0) {
+                } else if (powerN < 0) {
                     const invRes = matrixSolver.inverse.gaussJordan.solve(matA);
                     steps.push({
-                        explanation: `بما أن الأس سالب (${n})، نبدأ بحساب المعكوس $A^{-1}$:`,
+                        explanation: `بما أن الأس سالب (${powerN})، نوجد أولاً المعكوس $A^{-1}$:`,
                         equation: `A^{-1} = ${matrixSolver.utils.toLatex(invRes.inverse)}`
                     });
                     steps.push({
-                        explanation: `نحسب $(A^{-1})^{${-n}}$ بالضرب المتكرر / التربيع الثنائي`,
-                        equation: `A^{${n}} = (A^{-1})^{${-n}} = ${matrixSolver.utils.toLatex(solved.result)}`
+                        explanation: `ثم نحسب $(A^{-1})^{${-powerN}}$ بالضرب المتكرر / التربيع الثنائي:`,
+                        equation: `A^{${powerN}} = (A^{-1})^{${-powerN}} = ${matrixSolver.utils.toLatex(solved.result)}`
                     });
-                } else if (n === 1) {
+                } else if (powerN === 1) {
                     steps.push({
-                        explanation: 'المصفوفة مرفوعة للقوة 1 تساوي نفسها',
-                        equation: `A^1 = A`
+                        explanation: 'المصفوفة مرفوعة للقوة 1 تساوي نفسها:',
+                        equation: `A^1 = A = ${matrixSolver.utils.toLatex(solved.result)}`
                     });
-                } else if (n <= 6) {
+                } else if (powerN <= 6) {
                     let current = matrixSolver.utils.deepClone(matA);
-                    for (let i = 2; i <= n; i++) {
+                    for (let i = 2; i <= powerN; i++) {
                         current = math.multiply(current, matA);
                         steps.push({
-                            explanation: `الخطوة ${i - 1}: حساب $A^{${i}}$`,
+                            explanation: `الخطوة ${i - 1}: حساب $A^{${i}} = A^{${i - 1}} \\cdot A$`,
                             equation: `A^{${i}} = ${matrixSolver.utils.toLatex(current)}`
                         });
                     }
                 } else {
                     steps.push({
-                        explanation: `استخدام خوارزمية التربيع السريع (Binary Exponentiation) لحساب $A^{${n}}$ بكفاءة $O(\\log n)$`,
-                        equation: `A^{${n}} = ${matrixSolver.utils.toLatex(solved.result)}`
+                        explanation: `استخدام خوارزمية التربيع السريع (Binary Exponentiation) لحساب $A^{${powerN}}$ بكفاءة $O(\\log n)$:`,
+                        equation: `A^{${powerN}} = ${matrixSolver.utils.toLatex(solved.result)}`
                     });
+                }
+
+                // الطريقة 2: التحقق بالقطرنة A^n = P D^n P^-1 إذا كانت قابلة للقطرنة
+                if (Math.abs(powerN) >= 2 && matA.size()[0] <= 6) {
+                    try {
+                        const diag = matrixSolver.diagonalizeMatrix(matA);
+                        if (diag && diag.success && !diag.hasComplex) {
+                            const mDim = matA.size()[0];
+                            const DnArr = Array.from({ length: mDim }, (_, i) => Array.from({ length: mDim }, (__, j) => (i === j ? Math.pow(diag.eigenvalues[i], powerN) : 0)));
+                            const matDn = math.matrix(DnArr);
+                            const reconPow = math.multiply(math.multiply(diag.P, matDn), diag.PInv);
+                            const diff = math.norm(math.subtract(reconPow, solved.result), 'fro');
+                            steps.push({
+                                explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:14px;">الطريقة 2: التحقق عبر القطرنة (P D^n P⁻¹)</h3>`,
+                                equation: ''
+                            });
+                            steps.push({
+                                explanation: `بما أن $A = P D P^{-1}$، فإن $A^{${powerN}} = P D^{${powerN}} P^{-1}$ (الفرق العددي $= ${diff.toExponential(2)}$):`,
+                                equation: `D^{${powerN}} = ${matrixSolver.utils.toLatex(matDn)}, \\quad A^{${powerN}} = ${matrixSolver.utils.toLatex(reconPow)}`
+                            });
+                        }
+                    } catch { /* optional method */ }
                 }
 
                 return steps;
@@ -1553,59 +1587,56 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
             generateSteps(A) {
                 const steps = [];
                 const matA = matrixSolver.utils.toMatrix(A);
-                const arr = matA.toArray();
+                const arr = matA.toArray().map(r => r.map(Number));
                 const n = arr.length;
-                
+                const fmt = (v) => matrixSolver.utils.formatScalar(v);
+
                 steps.push({
-                    explanation: 'سنحسب المحدد باستخدام طريقة Laplace (التوسيع بالمرافقات)',
+                    explanation: 'المصفوفة المطلوب حساب محددها بطريقة Laplace (التوسيع بالمرافقات):',
                     equation: `A = ${matrixSolver.utils.toLatex(matA)}`
                 });
-                
+
                 if (n === 1) {
                     steps.push({
-                        explanation: 'محدد مصفوفة 1×1 هو العنصر نفسه',
-                        equation: `\\det(A) = ${arr[0][0]}`
+                        explanation: 'محدد مصفوفة 1×1 هو العنصر الوحيد نفسه:',
+                        equation: `\\det(A) = ${fmt(arr[0][0])}`
                     });
                 } else if (n === 2) {
                     steps.push({
-                        explanation: 'محدد مصفوفة 2×2 يحسب بالقاعدة المباشرة',
+                        explanation: 'نطبق قاعدة المحدد لمصفوفة 2×2:',
                         equation: `\\det\\begin{pmatrix}a & b \\\\ c & d\\end{pmatrix} = ad - bc`
                     });
                     const det = arr[0][0] * arr[1][1] - arr[0][1] * arr[1][0];
                     steps.push({
-                        explanation: 'التطبيق',
-                        equation: `\\det(A) = (${arr[0][0]})(${arr[1][1]}) - (${arr[0][1]})(${arr[1][0]}) = ${det}`
+                        explanation: 'التعويض والحساب:',
+                        equation: `\\det(A) = (${fmt(arr[0][0])})(${fmt(arr[1][1])}) - (${fmt(arr[0][1])})(${fmt(arr[1][0])}) = ${fmt(det)}`
                     });
                 } else {
                     steps.push({
-                        explanation: 'نوسع بالصف الأول',
-                        equation: `\\det(A) = \\sum_{j=1}^{n} (-1)^{1+j} a_{1j} M_{1j}`
+                        explanation: 'نوسّع بالصف الأول مع مرافقاته الصغرى:',
+                        equation: `\\det(A) = \\sum_{j=1}^{${n}} a_{1j} C_{1j}, \\quad C_{1j} = (-1)^{1+j} M_{1j}`
                     });
-                    
+
                     const terms = [];
                     for (let j = 0; j < n; j++) {
                         const cofactor = this._getCofactor(arr, 0, j);
-                        const sign = Math.pow(-1, j) > 0 ? '+' : '-';
-                        terms.push(`${sign === '-' ? sign : ''}${arr[0][j]} \\times ${Math.abs(cofactor)}`);
-                        
+                        const termVal = arr[0][j] * cofactor;
+                        const aStr = fmt(arr[0][j]);
+                        const cStr = fmt(cofactor);
+                        terms.push(`(${aStr})\\cdot(${cStr})`);
                         steps.push({
-                            explanation: `المرافق [1,${j+1}]`,
-                            equation: `C_{1${j+1}} = (-1)^{1+${j+1}} M_{1${j+1}} = ${cofactor}`
+                            explanation: `العنصر $a_{1${j + 1}} = ${aStr}$ ومرافقه $C_{1${j + 1}} = (-1)^{1+${j + 1}} M_{1${j + 1}} = ${cStr}$ (المساهمة $= ${fmt(termVal)}$):`,
+                            equation: `C_{1${j + 1}} = ${cStr}`
                         });
                     }
-                    
-                    steps.push({
-                        explanation: 'جمع جميع الحدود',
-                        equation: `\\det(A) = ${terms.join(' ')}`
-                    });
-                    
+
                     const det = this._calculateDeterminant(arr);
                     steps.push({
-                        explanation: 'النتيجة النهائية',
-                        equation: `\\det(A) = ${det}`
+                        explanation: 'جمع حاصل ضرب عناصر الصف الأول في مرافقاتها:',
+                        equation: `\\det(A) = ${terms.join(' + ')} = ${fmt(det)}`
                     });
                 }
-                
+
                 return steps;
             },
             
@@ -1613,7 +1644,7 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
                 const matA = matrixSolver.utils.toMatrix(A);
                 const det = this.solve(A).determinant;
                 
-                return `\\det${matrixSolver.utils.toLatex(matA, { brackets: 'vmatrix' })} = ${det}`;
+                return `\\det${matrixSolver.utils.toLatex(matA, { brackets: 'vmatrix' })} = ${matrixSolver.utils.formatScalar(det)}`;
             }
         },
         
@@ -1637,10 +1668,6 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
                         return luResult;
                     }
                     
-                    // المحدد = (محدد L) × (محدد U) × (إشارة التبديلات)
-                    // محدد L = 1 (لأن L مثلثة سفلى بآحاد على القطر)
-                    // محدد U = حاصل ضرب عناصر القطر
-                    
                     const U = luResult.U.toArray();
                     const n = U.length;
                     let det = 1;
@@ -1649,7 +1676,6 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
                         det *= U[i][i];
                     }
                     
-                    // تطبيق إشارة التبديلات
                     det *= luResult.permutationSign;
                     
                     return {
@@ -1663,7 +1689,7 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
                         operation: 'determinant',
                         latex: {
                             input: `A = ${matrixSolver.utils.toLatex(matA)}`,
-                            result: `\\det(A) = ${det}`
+                            result: `\\det(A) = ${matrixSolver.utils.formatScalar(det)}`
                         }
                     };
                 } catch (error) {
@@ -1677,14 +1703,10 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
             generateSteps(A) {
                 const steps = [];
                 const matA = matrixSolver.utils.toMatrix(A);
+                const fmt = (v) => matrixSolver.utils.formatScalar(v);
                 
                 steps.push({
-                    explanation: 'سنحسب المحدد باستخدام تفكيك LU',
-                    equation: `A = ${matrixSolver.utils.toLatex(matA)}`
-                });
-                
-                steps.push({
-                    explanation: 'نفكك المصفوفة إلى PA = LU',
+                    explanation: 'نفكك المصفوفة بالتبديل الجزئي إلى $PA = LU$:',
                     equation: `PA = LU`
                 });
                 
@@ -1694,35 +1716,21 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
                 }
                 
                 steps.push({
-                    explanation: 'المصفوفة L (مثلثة سفلى)',
-                    equation: `L = ${matrixSolver.utils.toLatex(result.L)}`
-                });
-                
-                steps.push({
-                    explanation: 'المصفوفة U (مثلثة عليا)',
-                    equation: `U = ${matrixSolver.utils.toLatex(result.U)}`
-                });
-                
-                steps.push({
-                    explanation: 'محدد المصفوفة = (محدد L) × (محدد U) × (إشارة التبديل)',
-                    equation: `\\det(A) = \\det(L) \\times \\det(U) \\times \\text{sign}(P)`
-                });
-                
-                steps.push({
-                    explanation: 'محدد المصفوفة المثلثية = حاصل ضرب عناصر القطر',
-                    equation: `\\det(U) = \\prod_{i=1}^{n} u_{ii}`
+                    explanation: 'المصفوفات الناتجة $L$ و $U$:',
+                    equation: `L = ${matrixSolver.utils.toLatex(result.L)}, \\quad U = ${matrixSolver.utils.toLatex(result.U)}`
                 });
                 
                 const U = result.U.toArray();
                 const diagonalTerms = U.map((row, i) => row[i]);
+                const detU = diagonalTerms.reduce((a, b) => a * b, 1);
                 steps.push({
-                    explanation: 'عناصر القطر لـ U',
-                    equation: `\\det(U) = ${diagonalTerms.join(' \\times ')} = ${result.determinant / result.permutationSign}`
+                    explanation: 'محدد $U$ يساوي جداء عناصر القطر الرئيسي (و $\\det(L) = 1$):',
+                    equation: `\\det(U) = ${diagonalTerms.map(fmt).join(' \\times ')} = ${fmt(detU)}`
                 });
                 
                 steps.push({
-                    explanation: 'النتيجة النهائية مع إشارة التبديل',
-                    equation: `\\det(A) = ${result.permutationSign} \\times ${result.determinant / result.permutationSign} = ${result.determinant}`
+                    explanation: 'النتيجة النهائية مع إشارة مصفوفة التبديل $\\det(P)$:',
+                    equation: `\\det(A) = (${result.permutationSign}) \\times (${fmt(detU)}) = ${fmt(result.determinant)}`
                 });
                 
                 return steps;
@@ -1730,7 +1738,7 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
             
             generateLatex(A) {
                 const result = this.solve(A);
-                return `\\det(A) = ${result.determinant}`;
+                return `\\det(A) = ${matrixSolver.utils.formatScalar(result.determinant)}`;
             }
         },
         
@@ -1752,11 +1760,9 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
                     let matrix = matrixSolver.utils.deepClone(matA);
                     const n = matrixSolver.utils.getDimensions(matrix).rows;
                     let swaps = 0;
-                    const steps = [];
                     
                     // تحويل إلى مصفوفة مثلثة عليا
                     for (let i = 0; i < n; i++) {
-                        // إيجاد المحور
                         let maxRow = i;
                         let maxVal = Math.abs(matrixSolver.utils.getElement(matrix, i, i));
                         
@@ -1768,7 +1774,6 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
                             }
                         }
                         
-                        // تبديل الصفوف إذا لزم الأمر
                         if (maxRow !== i) {
                             matrix = matrixSolver.utils.swapRows(matrix, i, maxRow);
                             swaps++;
@@ -1776,25 +1781,24 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
                         
                         const pivot = matrixSolver.utils.getElement(matrix, i, i);
                         
-                        // إذا كان المحور صفر، المحدد = 0
                         if (matrixSolver.utils.isZero(pivot)) {
                             return {
                                 success: true,
                                 determinant: 0,
                                 method: 'Gaussian Elimination',
+                                upperTriangular: matrix,
+                                numberOfSwaps: swaps,
                                 singularMatrix: true,
                                 operation: 'determinant'
                             };
                         }
                         
-                        // إزالة العناصر تحت المحور
                         for (let k = i + 1; k < n; k++) {
                             const factor = matrixSolver.utils.getElement(matrix, k, i) / pivot;
                             matrix = matrixSolver.utils.addRowMultiple(matrix, i, k, -factor);
                         }
                     }
                     
-                    // حساب المحدد = حاصل ضرب عناصر القطر × (-1)^(عدد التبديلات)
                     let det = 1;
                     for (let i = 0; i < n; i++) {
                         det *= matrixSolver.utils.getElement(matrix, i, i);
@@ -1810,7 +1814,7 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
                         operation: 'determinant',
                         latex: {
                             input: `A = ${matrixSolver.utils.toLatex(matA)}`,
-                            result: `\\det(A) = ${det}`
+                            result: `\\det(A) = ${matrixSolver.utils.formatScalar(det)}`
                         }
                     };
                 } catch (error) {
@@ -1824,15 +1828,11 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
             generateSteps(A) {
                 const steps = [];
                 const matA = matrixSolver.utils.toMatrix(A);
+                const fmt = (v) => matrixSolver.utils.formatScalar(v);
                 
                 steps.push({
-                    explanation: 'سنحسب المحدد باستخدام طريقة Gaussian Elimination',
+                    explanation: 'نحول المصفوفة إلى شكل مثلثي علوي $U$ عبر عمليات الصف الأولية (تبديل صفين يعكس الإشارة، وإضافة مضاعف صف لا يغيّر المحدد):',
                     equation: `A = ${matrixSolver.utils.toLatex(matA)}`
-                });
-                
-                steps.push({
-                    explanation: 'نحول المصفوفة إلى مثلثة عليا باستخدام عمليات الصف',
-                    equation: `\\text{المحدد لا يتغير إلا بالضرب في } (-1) \\text{ عند تبديل صفين}`
                 });
                 
                 const result = this.solve(A);
@@ -1840,26 +1840,35 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
                     return steps;
                 }
                 
-                steps.push({
-                    explanation: 'المصفوفة المثلثية العليا الناتجة',
-                    equation: `U = ${matrixSolver.utils.toLatex(result.upperTriangular)}`
-                });
-                
-                steps.push({
-                    explanation: `عدد تبديلات الصفوف: ${result.numberOfSwaps}`,
-                    equation: `\\text{إشارة المحدد} = (-1)^{${result.numberOfSwaps}} = ${Math.pow(-1, result.numberOfSwaps)}`
-                });
-                
+                if (result.upperTriangular) {
+                    steps.push({
+                        explanation: 'المصفوفة المثلثية العليا الناتجة $U$:',
+                        equation: `U = ${matrixSolver.utils.toLatex(result.upperTriangular)}`
+                    });
+                }
+
+                if (result.singularMatrix) {
+                    steps.push({
+                        explanation: 'ظهر محور صفري على القطر الرئيسي، مما يثبت أن المصفوفة مفردة:',
+                        equation: `\\det(A) = 0`
+                    });
+                    return steps;
+                }
+
+                const swaps = result.numberOfSwaps || 0;
+                const permSign = Math.pow(-1, swaps);
                 const U = result.upperTriangular.toArray();
                 const diagonalTerms = U.map((row, i) => row[i]);
+                const detU = diagonalTerms.reduce((a, b) => a * b, 1);
+
                 steps.push({
-                    explanation: 'محدد المصفوفة المثلثية = حاصل ضرب عناصر القطر',
-                    equation: `\\det(U) = ${diagonalTerms.join(' \\times ')} = ${Math.abs(result.determinant)}`
+                    explanation: `عدد تبديلات الصفوف $= ${swaps}$ (معامل الإشارة $(-1)^{${swaps}} = ${permSign}$)، وجداء عناصر القطر الرئيسي لـ $U$:`,
+                    equation: `\\det(U) = ${diagonalTerms.map(fmt).join(' \\times ')} = ${fmt(detU)}`
                 });
                 
                 steps.push({
-                    explanation: 'النتيجة النهائية',
-                    equation: `\\det(A) = ${Math.pow(-1, result.numberOfSwaps)} \\times ${Math.abs(result.determinant)} = ${result.determinant}`
+                    explanation: 'النتيجة النهائية للمحدد:',
+                    equation: `\\det(A) = (${permSign}) \\times (${fmt(detU)}) = ${fmt(result.determinant)}`
                 });
                 
                 return steps;
@@ -1867,10 +1876,75 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
             
             generateLatex(A) {
                 const result = this.solve(A);
-                return `\\det(A) = ${result.determinant}`;
+                return `\\det(A) = ${matrixSolver.utils.formatScalar(result.determinant)}`;
             }
         },
         
+        /**
+         * حساب المحدد بأكثر من طريقة مع التحقق المتقاطع
+         */
+        generateMultiMethodSteps(A) {
+            const matA = matrixSolver.utils.toMatrix(A);
+            const dim = matrixSolver.utils.getDimensions(matA);
+            if (dim.rows !== dim.cols) return [];
+
+            const n = dim.rows;
+            const fmt = (v) => matrixSolver.utils.formatScalar(v);
+            const steps = [];
+
+            if (n <= 4) {
+                steps.push({
+                    explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:10px;">الطريقة 1: ${n === 2 ? 'القاعدة المباشرة (2×2)' : 'التوسيع بالمرافقات (Laplace)'}</h3>`,
+                    equation: ''
+                });
+                steps.push(...this.laplace.generateSteps(matA));
+
+                if (n === 3) {
+                    const a = matA.toArray().map(r => r.map(Number));
+                    const pos = a[0][0] * a[1][1] * a[2][2] + a[0][1] * a[1][2] * a[2][0] + a[0][2] * a[1][0] * a[2][1];
+                    const neg = a[0][2] * a[1][1] * a[2][0] + a[0][0] * a[1][2] * a[2][1] + a[0][1] * a[1][0] * a[2][2];
+                    steps.push({
+                        explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:14px;">الطريقة 2: قاعدة ساروس القطرية (Sarrus' Rule 3×3)</h3>`,
+                        equation: ''
+                    });
+                    steps.push({
+                        explanation: 'مجموع جداءات الأقطار الرئيسية مطروحاً منه مجموع جداءات الأقطار الثانوية:',
+                        equation: `\\det(A) = (${fmt(pos)}) - (${fmt(neg)}) = ${fmt(pos - neg)}`
+                    });
+                }
+
+                steps.push({
+                    explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:14px;">الطريقة ${n === 3 ? '3' : '2'}: الحذف الغاوسي إلى مصفوفة مثلثية عليا (Gaussian Elimination)</h3>`,
+                    equation: ''
+                });
+                steps.push(...this.gaussian.generateSteps(matA));
+            } else {
+                steps.push({
+                    explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:10px;">الطريقة 1: الحذف الغاوسي إلى مصفوفة مثلثية عليا (Gaussian Elimination)</h3>`,
+                    equation: ''
+                });
+                steps.push(...this.gaussian.generateSteps(matA));
+
+                steps.push({
+                    explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:14px;">الطريقة 2: التحقق بتفكيك PA = LU</h3>`,
+                    equation: ''
+                });
+                steps.push(...this.lu.generateSteps(matA));
+            }
+
+            const gRes = this.gaussian.solve(matA);
+            const luRes = this.lu.solve(matA);
+            if (gRes.success && luRes.success) {
+                const diff = Math.abs(gRes.determinant - luRes.determinant);
+                steps.push({
+                    explanation: `التحقق المتقاطع بين الطرق: التطابق تام (الفارق العددي $= ${diff.toExponential(2)}$) — المصفوفة ${Math.abs(gRes.determinant) > 1e-10 ? 'غير مفردة (قابلة للعكس)' : 'مفردة (غير قابلة للعكس)'}.`,
+                    equation: `\\det(A) = ${fmt(gRes.determinant)}`
+                });
+            }
+
+            return steps;
+        },
+
         /**
          * الواجهة الرئيسية لحساب المحدد
          */
@@ -1906,10 +1980,7 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
         
         generateSteps(A, method = 'auto') {
             if (method === 'auto') {
-                const dim = matrixSolver.utils.getDimensions(matrixSolver.utils.toMatrix(A));
-                if (dim.rows <= 3) method = 'laplace';
-                else if (dim.rows <= 10) method = 'gaussian';
-                else method = 'lu';
+                return this.generateMultiMethodSteps(A);
             }
             
             switch (method.toLowerCase()) {
@@ -1951,8 +2022,54 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
     
     inverse: {
         solve(A, method = 'auto') {
-            // نستخدم غاوس جوردان كطريقة افتراضية لأنها الأفضل للشرح
             return this.gaussJordan.solve(A);
+        },
+
+        generateMultiMethodSteps(A) {
+            const matA = matrixSolver.utils.toMatrix(A);
+            const dim = matrixSolver.utils.getDimensions(matA);
+            if (dim.rows !== dim.cols) return [];
+
+            const n = dim.rows;
+            const steps = [];
+            steps.push({
+                explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:10px;">الطريقة 1: طريقة جاوس-جوردان [A | I] → [I | A⁻¹]</h3>`,
+                equation: ''
+            });
+            const gjRes = this.gaussJordan.runAlgorithm(matA, true);
+            steps.push(...(gjRes.steps || []));
+
+            if (gjRes.success && n <= 4) {
+                const adjRes = this.adjugate.solve(matA);
+                const detRes = matrixSolver.determinant.solve(matA, 'auto');
+                if (adjRes.success && detRes.success && Math.abs(detRes.determinant) > 1e-10) {
+                    const fmt = (v) => matrixSolver.utils.formatScalar(v);
+                    const adjInv = math.multiply(1 / detRes.determinant, adjRes.adjugate);
+                    const diff = math.norm(math.subtract(adjInv, gjRes.inverse), 'fro');
+                    steps.push({
+                        explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:14px;">الطريقة 2: طريقة المصفوفة المرافقة (A⁻¹ = adj(A) / det(A))</h3>`,
+                        equation: ''
+                    });
+                    steps.push({
+                        explanation: `نحسب المحدد $\\det(A) = ${fmt(detRes.determinant)}$ ومصفوفة المرافقات المنقولة $\\mathrm{adj}(A)$:`,
+                        equation: `\\mathrm{adj}(A) = ${matrixSolver.utils.toLatex(adjRes.adjugate)}`
+                    });
+                    steps.push({
+                        explanation: `نقسم على المحدد $\\det(A)$ (التطابق مع الطريقة 1: الفرق $= ${diff.toExponential(2)}$):`,
+                        equation: `A^{-1} = \\frac{1}{${fmt(detRes.determinant)}} ${matrixSolver.utils.toLatex(adjRes.adjugate)} = ${matrixSolver.utils.toLatex(adjInv)}`
+                    });
+                }
+            }
+
+            if (gjRes.success) {
+                const prodErr = math.norm(math.subtract(math.multiply(matA, gjRes.inverse), matrixSolver.utils.identity(n)), 'fro');
+                steps.push({
+                    explanation: `التحقق النهائي بالضرب: $\\|A \\cdot A^{-1} - I\\|_F = ${prodErr.toExponential(2)}$`,
+                    equation: `A \\cdot A^{-1} = I`
+                });
+            }
+
+            return steps;
         },
 
         gaussJordan: {
@@ -1969,97 +2086,108 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
                 try {
                     const matA = matrixSolver.utils.toMatrix(A);
                     const dim = matrixSolver.utils.getDimensions(matA);
-                    if(dim.rows !== dim.cols) return { success: false, error: "المصفوفة غير مربعة" };
+                    if (dim.rows !== dim.cols) return { success: false, error: "المصفوفة غير مربعة" };
                     
                     const n = dim.rows;
                     const steps = [];
+                    const fmt = (v) => matrixSolver.utils.formatScalar(v);
 
                     // 1. [A | I]
-                    let augData = [];
-                    const arrA = matA.toArray();
-                    for(let i=0; i<n; i++) {
-                        let rowI = new Array(n).fill(0);
+                    const M = matA.toArray().map((row, i) => {
+                        const rowI = new Array(n).fill(0);
                         rowI[i] = 1;
-                        augData[i] = [...arrA[i], ...rowI];
-                    }
-                    let M = math.matrix(augData);
+                        return [...row.map(Number), ...rowI];
+                    });
 
-                    if(recordSteps) {
+                    if (recordSteps) {
                         steps.push({ 
-                            explanation: 'نبدأ بتشكيل المصفوفة الموسعة $[A|I]$:', 
+                            explanation: 'نبدأ بتشكيل المصفوفة الموسعة $[A\\mid I]$:', 
                             equation: matrixSolver.utils.toLatex(M) 
                         });
                     }
 
-                    // Gauss-Jordan
-                    for(let i=0; i<n; i++) {
-                        // Pivot
-                        let pivot = M.get([i,i]);
-                        if(Math.abs(pivot) < 1e-10) {
-                            // Find swap
-                            let swapRow = -1;
-                            for(let k=i+1; k<n; k++) {
-                                if(Math.abs(M.get([k,i])) > 1e-10) { swapRow = k; break; }
+                    // Gauss-Jordan with Partial Pivoting
+                    for (let i = 0; i < n; i++) {
+                        let maxRow = i;
+                        let maxVal = Math.abs(M[i][i]);
+                        for (let k = i + 1; k < n; k++) {
+                            const cand = Math.abs(M[k][i]);
+                            if (cand > maxVal) {
+                                maxVal = cand;
+                                maxRow = k;
                             }
-                            if(swapRow === -1) return { success: false, error: "المصفوفة شاذة (Singular) لا معكوس لها" };
-                            
-                            // Swap logic (manual)
-                            for(let c=0; c<2*n; c++) {
-                                let tmp = M.get([i,c]);
-                                M.set([i,c], M.get([swapRow,c]));
-                                M.set([swapRow,c], tmp);
-                            }
-                            pivot = M.get([i,i]);
                         }
 
-                        // Normalize row i
-                        for(let j=0; j<2*n; j++) {
-                            M.set([i,j], M.get([i,j]) / pivot);
-                        }
-                        
-                        if(recordSteps) {
-                            steps.push({ explanation: `جعل العنصر المحوري (1) في الصف ${i+1}:`, equation: matrixSolver.utils.toLatex(M) });
+                        if (maxVal < 1e-10) {
+                            return { success: false, error: "المصفوفة شاذة / مفردة (det(A) = 0) ولا معكوس لها" };
                         }
 
-                        // Eliminate other rows
-                        for(let k=0; k<n; k++) {
-                            if(k !== i) {
-                                const factor = M.get([k,i]);
-                                if(Math.abs(factor) > 1e-10) {
-                                    for(let j=0; j<2*n; j++) {
-                                        M.set([k,j], M.get([k,j]) - factor * M.get([i,j]));
+                        if (maxRow !== i) {
+                            [M[i], M[maxRow]] = [M[maxRow], M[i]];
+                            if (recordSteps) {
+                                steps.push({
+                                    explanation: `تبديل الصف $R_${i + 1} \\leftrightarrow R_${maxRow + 1}$ لاختيار أكبر محور:`,
+                                    equation: matrixSolver.utils.toLatex(M)
+                                });
+                            }
+                        }
+
+                        const pivot = M[i][i];
+                        if (Math.abs(pivot - 1) > 1e-10) {
+                            for (let j = 0; j < 2 * n; j++) {
+                                M[i][j] /= pivot;
+                                if (Math.abs(M[i][j]) < 1e-12) M[i][j] = 0;
+                            }
+                            if (recordSteps) {
+                                steps.push({
+                                    explanation: `تطبيع الصف المحوري $R_${i + 1} \\leftarrow \\frac{1}{${fmt(pivot)}} R_${i + 1}$:`,
+                                    equation: matrixSolver.utils.toLatex(M)
+                                });
+                            }
+                        }
+
+                        let eliminatedAny = false;
+                        for (let k = 0; k < n; k++) {
+                            if (k !== i) {
+                                const factor = M[k][i];
+                                if (Math.abs(factor) > 1e-10) {
+                                    eliminatedAny = true;
+                                    for (let j = 0; j < 2 * n; j++) {
+                                        M[k][j] -= factor * M[i][j];
+                                        if (Math.abs(M[k][j]) < 1e-12) M[k][j] = 0;
                                     }
                                 }
                             }
                         }
-                    }
 
-                    // Extract Inverse
-                    let invData = [];
-                    for(let i=0; i<n; i++) {
-                        invData[i] = [];
-                        for(let j=0; j<n; j++) {
-                            invData[i][j] = M.get([i, j+n]);
+                        if (recordSteps && eliminatedAny) {
+                            steps.push({
+                                explanation: `تصفير بقية عناصر العمود ${i + 1} باستخدام الصف المحوري $R_${i + 1}$:`,
+                                equation: matrixSolver.utils.toLatex(M)
+                            });
                         }
                     }
+
+                    const invData = M.map(row => row.slice(n));
                     const invMat = math.matrix(invData);
 
-                    if(recordSteps) {
+                    if (recordSteps) {
                         steps.push({
-                            explanation: 'أصبح الطرف الأيسر مصفوفة الوحدة، فالطرف الأيمن هو المعكوس:',
+                            explanation: 'تحول الطرف الأيسر إلى مصفوفة الوحدة $I$، فيكون الطرف الأيمن هو المعكوس $A^{-1}$:',
                             equation: `A^{-1} = ${matrixSolver.utils.toLatex(invMat)}`
                         });
                     }
 
-                    return { success: true, result: invMat, inverse: invMat, steps: steps };
-
-                } catch(e) {
+                    return { success: true, result: invMat, inverse: invMat, steps };
+                } catch (e) {
                     return { success: false, error: e.message };
                 }
             },
             
-            // Helper just in case
-            generateLatex(A) { return ''; }
+            generateLatex(A) {
+                const res = this.solve(A);
+                return res.success ? `A^{-1} = ${matrixSolver.utils.toLatex(res.inverse)}` : '';
+            }
         },
         
         adjugate: {
@@ -2108,14 +2236,18 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
                     const cofactorMat = math.matrix(cofactorArr);
                     const adjMat = math.matrix(adjArr);
                     const detA = math.det(arr);
+                    const expectedProd = math.multiply(detA, matrixSolver.utils.identity(n));
+                    const adjErr = math.norm(math.subtract(math.multiply(matA, adjMat), expectedProd), 'fro');
                     const steps = [
-                        { explanation: 'نحسب مصفوفة المرافقات $C$ حيث $C_{ij} = (-1)^{i+j}\\det(M_{ij})$:', equation: `C = ${matrixSolver.utils.toLatex(cofactorMat)}` },
-                        { explanation: 'المصفوفة المرافقة هي منقول مصفوفة المرافقات $\\mathrm{adj}(A) = C^T$:', equation: `\\mathrm{adj}(A) = ${matrixSolver.utils.toLatex(adjMat)}` }
+                        { explanation: 'نحسب مصفوفة المرافقات الصغرى $C$ حيث $C_{ij} = (-1)^{i+j}\\det(M_{ij})$:', equation: `C = ${matrixSolver.utils.toLatex(cofactorMat)}` },
+                        { explanation: 'المصفوفة المرافقة هي منقول مصفوفة المرافقات $\\mathrm{adj}(A) = C^T$:', equation: `\\mathrm{adj}(A) = ${matrixSolver.utils.toLatex(adjMat)}` },
+                        { explanation: `التحقق من المتطابقة الأساسية $\\|A\\cdot\\mathrm{adj}(A) - \\det(A)I\\|_F = ${adjErr.toExponential(2)}$:`, equation: `A\\cdot\\mathrm{adj}(A) = (${matrixSolver.utils.formatScalar(detA)})I` }
                     ];
                     if (Math.abs(detA) > 1e-10) {
+                        const invMat = math.multiply(1 / detA, adjMat);
                         steps.push({
-                            explanation: `ملاحظة: يمكن استنتاج المعكوس بالعلاقة $A^{-1} = \\frac{1}{\\det(A)}\\mathrm{adj}(A)$ حيث $\\det(A) = ${matrixSolver.utils.formatScalar(detA)}$:`,
-                            equation: `A^{-1} = \\frac{1}{${matrixSolver.utils.formatScalar(detA)}} ${matrixSolver.utils.toLatex(adjMat)}`
+                            explanation: `استنتاج المعكوس مباشرة بالعلاقة $A^{-1} = \\frac{1}{\\det(A)}\\mathrm{adj}(A)$:`,
+                            equation: `A^{-1} = \\frac{1}{${matrixSolver.utils.formatScalar(detA)}} ${matrixSolver.utils.toLatex(adjMat)} = ${matrixSolver.utils.toLatex(invMat)}`
                         });
                     }
                     return {
@@ -2216,8 +2348,15 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
                     const matP = math.matrix(P);
                     const permSign = swaps % 2 === 0 ? 1 : -1;
                     const err = math.norm(math.subtract(math.multiply(matP, matA), math.multiply(matL, matU)), 'fro');
+                    const diagU = U.map((r, i) => r[i]);
+                    const detU = diagU.reduce((a, b) => a * b, 1);
+                    const detFromLU = permSign * detU;
 
                     if (recordSteps) {
+                        steps.push({
+                            explanation: `استنتاج المحدد من التفكيك: $\\det(A) = (-1)^{${swaps}} \\prod_{i=1}^{${n}} U_{ii}$`,
+                            equation: `\\det(A) = (${permSign}) \\cdot (${matrixSolver.utils.formatScalar(detU)}) = ${matrixSolver.utils.formatScalar(detFromLU)}`
+                        });
                         steps.push({
                             explanation: `التحقق العددي: $\\|PA - LU\\|_F = ${err.toExponential(2)}$`,
                             equation: `P=${matrixSolver.utils.toLatex(matP)}, \\quad L=${matrixSolver.utils.toLatex(matL)}, \\quad U=${matrixSolver.utils.toLatex(matU)}`
@@ -2276,10 +2415,12 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
 
                     for (let j = 0; j < n; j++) {
                         let v = [...V[j]];
+                        const projTerms = [];
                         for (let i = 0; i < Qcols.length; i++) {
                             const q = Qcols[i];
                             const dot = v.reduce((s, val, idx) => s + val * q[idx], 0);
                             R[i][j] = dot;
+                            projTerms.push(`R_{${i + 1},${j + 1}} = ${matrixSolver.utils.formatScalar(dot)}`);
                             for (let idx = 0; idx < m; idx++) {
                                 v[idx] -= dot * q[idx];
                             }
@@ -2290,6 +2431,13 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
                             const q = v.map(val => val / norm);
                             Qcols.push(q);
                             rankCount++;
+                            if (recordSteps) {
+                                const projStr = projTerms.length ? `بعد طرح الإسقاطات (${projTerms.join('، ')})` : 'العمود الأول بدون إسقاطات سابقة';
+                                steps.push({
+                                    explanation: `العمود ${j + 1} (${projStr}) ثم التطبيع على المعيار $\\|u_${j + 1}\\|_2 = ${matrixSolver.utils.formatScalar(norm)}$:`,
+                                    equation: `q_${Qcols.length} = ${matrixSolver.utils.toLatex(q.map(x => [x]))}`
+                                });
+                            }
                         } else if (j < Qcols.length) {
                             R[j][j] = 0;
                         }
@@ -2305,7 +2453,7 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
                     const reconErr = qColsCount > 0 ? math.norm(math.subtract(matA, math.multiply(Q, RMat)), 'fro') : 0;
                     const orthoErr = qColsCount > 0 ? math.norm(math.subtract(math.multiply(math.transpose(Q), Q), math.identity(qColsCount)), 'fro') : 0;
 
-                    if (recordSteps || true) {
+                    if (recordSteps) {
                         steps.push({
                             explanation: `توليد الأعمدة المتعامدة القياسية ($Q \\in \\mathbb{R}^{${m}\\times ${qColsCount}}$) والمصفوفة المثلثية العليا ($R \\in \\mathbb{R}^{${qColsCount}\\times ${n}}$):`,
                             equation: `Q = ${matrixSolver.utils.toLatex(Q)}, \\quad R = ${matrixSolver.utils.toLatex(RMat)}`
@@ -2388,14 +2536,16 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
                     const matLT = math.transpose(matL);
                     const err = math.norm(math.subtract(matA, math.multiply(matL, matLT)), 'fro');
 
-                    steps.push({
-                        explanation: 'التحقق من التناظر ($A = A^T$) والتعريف الموجب، ثم حساب عناصر $L$ المثلثية السفلية:',
-                        equation: `L_{ii} = \\sqrt{a_{ii} - \\sum_{k=1}^{i-1} L_{ik}^2}, \\quad L_{ij} = \\frac{1}{L_{jj}}\\left(a_{ij} - \\sum_{k=1}^{j-1} L_{ik}L_{jk}\\right)`
-                    });
-                    steps.push({
-                        explanation: `النتيجة والتحقق ($\\|A - LL^T\\|_F = ${err.toExponential(2)}$):`,
-                        equation: `L = ${matrixSolver.utils.toLatex(matL)}, \\quad L^T = ${matrixSolver.utils.toLatex(matLT)}`
-                    });
+                    if (recordSteps) {
+                        steps.push({
+                            explanation: 'التحقق من التناظر ($A = A^T$) والتعريف الموجب، ثم حساب عناصر $L$ المثلثية السفلية:',
+                            equation: `L_{ii} = \\sqrt{a_{ii} - \\sum_{k=1}^{i-1} L_{ik}^2}, \\quad L_{ij} = \\frac{1}{L_{jj}}\\left(a_{ij} - \\sum_{k=1}^{j-1} L_{ik}L_{jk}\\right)`
+                        });
+                        steps.push({
+                            explanation: `النتيجة والتحقق ($\\|A - LL^T\\|_F = ${err.toExponential(2)}$):`,
+                            equation: `L = ${matrixSolver.utils.toLatex(matL)}, \\quad L^T = ${matrixSolver.utils.toLatex(matLT)}`
+                        });
+                    }
 
                     return {
                         success: true,
@@ -2961,9 +3111,14 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
                     // Compute roots (exact quadratic / trigonometric-Cardano cubic / math.eigs or companion QR)
                     const roots = matrixSolver.computePolynomialRoots(c, matA);
                     const eigStr = roots.map(r => matrixSolver.utils.formatScalar(r)).join(', ');
+                    const trA = Number(math.trace(matA));
+                    const detA = Number(math.det(matA));
+                    const coeffList = faddeevSteps.map(fs => `c_${fs.k} = ${matrixSolver.utils.formatScalar(fs.ck)}`).join(',\\; ');
 
                     const steps = [
-                        { explanation: 'نطبق خوارزمية فادييف-لوفيرييه (Faddeev-LeVerrier) لإيجاد معاملات $\\det(\\lambda I - A) = 0$:', equation: `p(\\lambda) = ${polyLatex}` },
+                        { explanation: 'نطبق خوارزمية فادييف-لوفيرييه (Faddeev-LeVerrier) تكرارياً لحساب معاملات $p(\\lambda) = \\det(\\lambda I - A)$:', equation: coeffList },
+                        { explanation: 'المعادلة المميزة الناتجة:', equation: `p(\\lambda) = ${polyLatex}` },
+                        { explanation: `التحقق الجبري: $c_1 = -\\mathrm{tr}(A) = ${matrixSolver.utils.formatScalar(-trA)}$، والحد الثابت $c_${n} = (-1)^{${n}}\\det(A) = ${matrixSolver.utils.formatScalar(Math.pow(-1, n) * detA)}$`, equation: `\\det(\\lambda I - A) = 0` },
                         { explanation: 'الجذور (القيم الذاتية للمصفوفة):', equation: `\\lambda = \\left\\{ ${eigStr} \\right\\}` }
                     ];
 
@@ -3029,14 +3184,14 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
                         }
                     }
 
-                    // Case 1: Inconsistent system -> prove + compute Least Squares x_hat = A^+ b
+                    // Case 1: Inconsistent system -> prove + compute Least Squares x_hat = A^+ b and Normal Equations
                     if (inconsistentRow !== -1) {
                         const pinvRes = matrixSolver.computePseudoinverse(matA);
                         const steps = [
                             { explanation: 'نكوّن المصفوفة الموسعة $[A\\mid b]$ ونحوّلها للشكل الصفّي المختزل (RREF):', equation: matrixSolver.utils.toLatex(aug) },
                             ...rrefSteps,
                             {
-                                explanation: `⚠️ النظام متعارض (Inconsistent) لأن الصف ${inconsistentRow + 1} يعطي التناقض $0 = ${matrixSolver.utils.formatScalar(rref[inconsistentRow][n])}$ ($\\mathrm{rank}(A)=${rankA} < \\mathrm{rank}([A\\mid b])$).`,
+                                explanation: `⚠️ النظام متعارض (Inconsistent) لأن الصف ${inconsistentRow + 1} يعطي التناقض $0 = ${matrixSolver.utils.formatScalar(rref[inconsistentRow][n])}$ (رتبة $A = ${rankA}$ أقل من رتبة $[A\\mid b]$).`,
                                 equation: `0 = ${matrixSolver.utils.formatScalar(rref[inconsistentRow][n])}`
                             }
                         ];
@@ -3044,12 +3199,37 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
                         if (pinvRes.success) {
                             const colB = math.matrix(flatB.map(v => [v]));
                             const xHat = math.multiply(pinvRes.pseudoinverse, colB);
-                            const residual = math.norm(math.subtract(math.multiply(matA, xHat), colB), 'fro');
+                            const residualVec = math.subtract(math.multiply(matA, xHat), colB);
+                            const residual = math.norm(residualVec, 'fro');
                             const xHatArr = xHat.toArray().flat();
                             steps.push({
-                                explanation: 'نوجد أفضل حل تقريبي بطريقة المربعات الصغرى $\\hat{x} = A^+ b$ (لتقليل $\\|Ax - b\\|_2$):',
+                                explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:14px;">الطريقة 1: حل المربعات الصغرى عبر شبه المعكوس SVD (x̂ = A⁺b)</h3>`,
+                                equation: ''
+                            });
+                            steps.push({
+                                explanation: 'نوجد أفضل حل تقريبي يقلل $\\|Ax - b\\|_2$ إلى حده الأدنى:',
                                 equation: `\\hat{x} = ${matrixSolver.utils.toLatex(xHat)}, \\quad \\|A\\hat{x} - b\\|_2 = ${matrixSolver.utils.formatScalar(residual, 6)}`
                             });
+
+                            try {
+                                const AT = math.transpose(matA);
+                                const ATA = math.multiply(AT, matA);
+                                if (Math.abs(math.det(ATA)) > 1e-9) {
+                                    const ATb = math.multiply(AT, colB);
+                                    const xNorm = math.multiply(math.inv(ATA), ATb);
+                                    const methodDiff = math.norm(math.subtract(xNorm, xHat), 'fro');
+                                    const orthoRes = math.norm(math.multiply(AT, residualVec), 'fro');
+                                    steps.push({
+                                        explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:14px;">الطريقة 2: المعادلات الطبيعية (AᵀA x̂ = Aᵀb)</h3>`,
+                                        equation: ''
+                                    });
+                                    steps.push({
+                                        explanation: `نحل المعادلات الطبيعية (التطابق مع الطريقة 1: الفرق $= ${methodDiff.toExponential(2)}$، وتعامد الباقي $\\|A^T(A\\hat{x}-b)\\|_2 = ${orthoRes.toExponential(2)}$):`,
+                                        equation: `\\hat{x} = (A^T A)^{-1} A^T b = ${matrixSolver.utils.toLatex(xNorm)}`
+                                    });
+                                }
+                            } catch { /* ignore if ATA near-singular */ }
+
                             return {
                                 success: true,
                                 solutionType: 'inconsistent_leastsquares',
@@ -3088,13 +3268,27 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
                         const xpLatex = matrixSolver.utils.toLatex(xp.map(v => [v]));
                         const paramLatex = basis.map((v, k) => `t_{${k + 1}} ${matrixSolver.utils.toLatex(v.map(x => [x]))}`).join(' + ');
                         const generalLatex = `x = ${xpLatex} + ${paramLatex}`;
+                        const colB = math.matrix(flatB.map(v => [v]));
+                        const xpErr = math.norm(math.subtract(math.multiply(matA, math.matrix(xp.map(v => [v]))), colB), 'fro');
+                        const nullErr = basis.reduce((mx, bv) => Math.max(mx, math.norm(math.multiply(matA, math.matrix(bv.map(v => [v]))), 'fro')), 0);
 
                         const steps = [
-                            { explanation: `المصفوفة الموسعة $[A\\mid b]$ ذات رتبة $\\mathrm{rank}(A) = ${rankA} < n = ${n}$، لذا يوجد عدد لا نهائي من الحلول (${freeCols.length} متغيرات حرة):`, equation: matrixSolver.utils.toLatex(aug) },
+                            { explanation: `المصفوفة الموسعة $[A\\mid b]$ ذات رتبة $\\mathrm{rank}(A) = ${rankA} \\lt n = ${n}$، لذا يوجد عدد لا نهائي من الحلول (${freeCols.length} متغيرات حرة):`, equation: matrixSolver.utils.toLatex(aug) },
                             ...rrefSteps,
                             { explanation: 'الشكل الصفّي المختزل النهائي:', equation: `\\mathrm{RREF}([A\\mid b]) = ${matrixSolver.utils.toLatex(rref)}` },
-                            { explanation: 'نعبّر عن المتغيرات المحورية بدلالة المتغيرات الحرة ($t_1, t_2, \\dots \\in \\mathbb{R}$) للحصول على الحل العام البارامتري:', equation: generalLatex }
+                            { explanation: 'الطريقة 1 — نعبّر عن المتغيرات المحورية بدلالة المتغيرات الحرة ($t_1, t_2, \\dots \\in \\mathbb{R}$) للحصول على الحل العام البارامتري:', equation: generalLatex },
+                            { explanation: `التحقق من الحل الخاص والفضاء المتجانس: $\\|Ax_p - b\\|_2 = ${xpErr.toExponential(2)}$، $\\max_k \\|Av_k\\|_2 = ${nullErr.toExponential(2)}$`, equation: `Ax_p = b, \\quad Av_k = 0` }
                         ];
+
+                        const pinvInf = matrixSolver.computePseudoinverse(matA);
+                        if (pinvInf.success) {
+                            const xMin = math.multiply(pinvInf.pseudoinverse, colB);
+                            const xMinErr = math.norm(math.subtract(math.multiply(matA, xMin), colB), 'fro');
+                            steps.push({
+                                explanation: `الطريقة 2 — الحل ذو المعيار الأدنى عبر شبه المعكوس $x_{\\min} = A^+ b$ (بتحقق $\\|Ax_{\\min} - b\\|_2 = ${xMinErr.toExponential(2)}$):`,
+                                equation: `x_{\\min} = ${matrixSolver.utils.toLatex(xMin)}`
+                            });
+                        }
 
                         return {
                             success: true,
@@ -3149,11 +3343,18 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
                         combinedSteps = combinedSteps.concat(res.steps);
                     });
 
+                    const checkResidual = math.norm(math.subtract(math.multiply(matA, uniqueSolMat), math.matrix(flatB.map(v => [v]))), 'fro');
+                    combinedSteps.push({
+                        explanation: `التحقق النهائي بتعويض الحل في المعادلة الأصلية: $\\|Ax - b\\|_2 = ${checkResidual.toExponential(2)}$`,
+                        equation: `A \\cdot ${matrixSolver.utils.toLatex(uniqueSolMat)} = ${matrixSolver.utils.toLatex(vecB)}`
+                    });
+
                     return {
                         success: true,
                         solutionType: 'unique',
                         solution: uniqueSolMat,
                         solutionVector: xUnique,
+                        residualNorm: checkResidual,
                         steps: combinedSteps,
                         latex: { result: `x = ${matrixSolver.utils.toLatex(uniqueSolMat)}` }
                     };
@@ -3347,62 +3548,46 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
                 const steps = [];
                 const matA = matrixSolver.utils.toMatrix(A);
                 const dim = matrixSolver.utils.getDimensions(matA);
-                const m = dim.rows;
                 const n = dim.cols;
-                
-                steps.push({
-                    explanation: 'حساب رتبة المصفوفة',
-                    equation: `A = ${matrixSolver.utils.toLatex(matA)}`
-                });
-                
-                steps.push({
-                    explanation: 'الرتبة = عدد الصفوف غير الصفرية في Row Echelon Form',
-                    equation: `\\text{rank}(A) = \\text{number of non-zero rows in REF}(A)`
-                });
-                
                 const result = this.solve(A);
                 if (!result.success) {
-                    steps.push({
-                        explanation: 'فشل الحساب',
-                        equation: result.error
-                    });
-                    return steps;
+                    return [{ explanation: 'تعذر حساب الرتبة:', equation: result.error }];
                 }
-                
-                if (result.rowEchelonForm) {
-                    steps.push({
-                        explanation: 'التحويل إلى الشكل الصفّي (REF) عبر العمليات الصفّية',
-                        equation: `\\text{REF}(A) = ${matrixSolver.utils.toLatex(result.rowEchelonForm)}`
-                    });
-                }
-                
-                steps.push({
-                    explanation: `أعمدة المحاور: [${result.pivotColumns.map(c => c+1).join(', ')}]`,
-                    equation: `\\text{Pivot columns: } [${result.pivotColumns.map(c => c+1).join(', ')}]`
-                });
-                
-                steps.push({
-                    explanation: `عدد الصفوف غير الصفرية في REF = ${result.rank}`,
-                    equation: `\\text{rank}(A) = ${result.rank}`
-                });
 
                 steps.push({
-                    explanation: 'حساب الـ Nullity من العلاقة: nullity = n - rank',
-                    equation: `\\text{nullity}(A) = ${n} - ${result.rank} = ${n - result.rank}`
+                    explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:10px;">الطريقة 1: التحويل إلى الشكل الصفّي المختزل (RREF)</h3>`,
+                    equation: ''
+                });
+                const rrefDetail = matrixSolver.computeRREFWithSteps(matA.toArray().map(r => r.map(Number)));
+                steps.push({
+                    explanation: 'نبدأ بالمصفوفة الأصلية ونطبّق العمليات الصفية الأولية:',
+                    equation: `A = ${matrixSolver.utils.toLatex(matA)}`
+                });
+                steps.push(...rrefDetail.steps);
+                steps.push({
+                    explanation: `الشكل الصفّي المختزل النهائي، وأعمدة المحاور هي [${result.pivotColumns.map(c => c + 1).join(', ') || 'لا يوجد'}]:`,
+                    equation: `\\mathrm{RREF}(A) = ${matrixSolver.utils.toLatex(rrefDetail.rref)}`
+                });
+                steps.push({
+                    explanation: `مبرهنة الرتبة والبعد الصفري: $\\mathrm{rank}(A) + \\mathrm{nullity}(A) = ${n}$`,
+                    equation: `\\mathrm{rank}(A) = ${result.rank}, \\quad \\mathrm{nullity}(A) = ${n - result.rank}`
                 });
 
-                steps.push({
-                    explanation: 'النتيجة',
-                    equation: `\\text{rank}(A) = ${result.rank}, \\quad \\text{nullity}(A) = ${n - result.rank}`
-                });
-                
-                if (result.fullRank) {
-                    steps.push({
-                        explanation: 'المصفوفة ذات رتبة كاملة (Full Rank)',
-                        equation: `\\text{Full Rank Matrix}`
-                    });
+                if (Math.max(dim.rows, n) <= 10) {
+                    const svdRes = matrixSolver.decompositions.svd.solve(matA);
+                    if (svdRes.success) {
+                        const fmt = (v) => matrixSolver.utils.formatScalar(v);
+                        steps.push({
+                            explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:14px;">الطريقة 2: التحقق العددي عبر القيم المفردة (SVD)</h3>`,
+                            equation: ''
+                        });
+                        steps.push({
+                            explanation: `عدد القيم المفردة غير الصفرية ($\\sigma_i \\gt 0$) يؤكد الرتبة = ${svdRes.rank}:`,
+                            equation: `\\sigma = [${svdRes.singularValues.map(fmt).join(', ')}] \\implies \\mathrm{rank}(A) = ${svdRes.rank}`
+                        });
+                    }
                 }
-                
+
                 return steps;
             },
             
@@ -3539,59 +3724,39 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
             generateSteps(A) {
                 const steps = [];
                 const matA = matrixSolver.utils.toMatrix(A);
-                
-                steps.push({
-                    explanation: 'حساب الفضاء الصفري (Null Space) والـ Nullity',
-                    equation: `A = ${matrixSolver.utils.toLatex(matA)}`
-                });
-                
-                steps.push({
-                    explanation: 'الفضاء الصفري = مجموعة الحلول لـ Ax = 0',
-                    equation: `N(A) = \\{ x \\in \\mathbb{R}^n : Ax = 0 \\}`
-                });
-                
                 const result = this.solve(A);
                 if (!result.success) {
-                    steps.push({
-                        explanation: 'فشل الحساب',
-                        equation: result.error
-                    });
-                    return steps;
+                    return [{ explanation: 'فشل حساب الفضاء الصفري:', equation: result.error }];
                 }
-                
+
+                const rrefDetail = matrixSolver.computeRREFWithSteps(matA.toArray().map(r => r.map(Number)));
                 steps.push({
-                    explanation: 'RREF للمصفوفة',
-                    equation: `\\text{RREF}(A) = ${matrixSolver.utils.toLatex(result.rref)}`
+                    explanation: 'الفضاء الصفري هو مجموعة جميع حلول النظام المتجانس $Ax = 0$:',
+                    equation: `A = ${matrixSolver.utils.toLatex(matA)}, \\quad Ax = 0`
                 });
-                
+                steps.push(...rrefDetail.steps);
                 steps.push({
-                    explanation: `أعمدة المحاور: [${result.pivotColumns.map(c => c+1).join(', ')}]`,
-                    equation: `\\text{Pivot columns: } [${result.pivotColumns.map(c => c+1).join(', ')}]`
+                    explanation: `الشكل الصفّي المختزل (أعمدة المحاور: [${result.pivotColumns.map(c => c + 1).join(', ') || 'لا يوجد'}]، والأعمدة الحرة: [${result.freeColumns.map(c => c + 1).join(', ') || 'لا يوجد'}]):`,
+                    equation: `\\mathrm{RREF}(A) = ${matrixSolver.utils.toLatex(result.rref)}`
                 });
-                
                 steps.push({
-                    explanation: `أعمدة حرة: [${result.freeColumns.map(c => c+1).join(', ')}]`,
-                    equation: `\\text{Free columns: } [${result.freeColumns.map(c => c+1).join(', ')}]`
+                    explanation: 'تطبيق مبرهنة الرتبة والبُعد الصفري (Rank-Nullity):',
+                    equation: `\\mathrm{rank}(A) + \\mathrm{nullity}(A) = ${result.rank} + ${result.nullity} = ${result.rank + result.nullity}`
                 });
-                
-                steps.push({
-                    explanation: 'النتائج',
-                    equation: `\\text{rank}(A) = ${result.rank}, \\quad \\text{nullity}(A) = ${result.nullity}`
-                });
-                
-                steps.push({
-                    explanation: 'مبرهنة الرتبة-Nullity',
-                    equation: result.rankNullityTheorem
-                });
-                
-                if (result.nullBasis.length > 0) {
+
+                if (result.nullSpaceBasis.length > 0) {
+                    const maxResidual = result.nullSpaceBasis.reduce((mx, v) => Math.max(mx, math.norm(math.multiply(matA, v), 'fro')), 0);
                     steps.push({
-                        explanation: 'أساس الفضاء الصفري',
-                        equation: `\\text{Basis of } N(A): ${result.nullBasis.map(v => 
-                            matrixSolver.utils.toLatex(v)).join(', ')}`
+                        explanation: `أساس الفضاء الصفري $N(A)$ (التحقق: $\\max_k \\|A v_k\\|_2 = ${maxResidual.toExponential(2)}$):`,
+                        equation: `\\text{Basis}(N(A)) = \\left\\{ ${result.nullSpaceBasis.map(v => matrixSolver.utils.toLatex(v)).join(', ')} \\right\\}`
+                    });
+                } else {
+                    steps.push({
+                        explanation: 'لا توجد متغيرات حرة، لذا الفضاء الصفري تافه يحتوي المتجه الصفري فقط:',
+                        equation: `N(A) = \\{ \\mathbf{0} \\}`
                     });
                 }
-                
+
                 return steps;
             },
             
@@ -3649,42 +3814,38 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
             generateSteps(A) {
                 const steps = [];
                 const matA = matrixSolver.utils.toMatrix(A);
-                
-                steps.push({
-                    explanation: 'حساب فضاء الأعمدة (Column Space)',
-                    equation: `A = ${matrixSolver.utils.toLatex(matA)}`
-                });
-                
-                steps.push({
-                    explanation: 'فضاء الأعمدة = span of columns',
-                    equation: `C(A) = \\text{span}\\{ a_1, a_2, \\ldots, a_n \\}`
-                });
-                
                 const result = this.solve(A);
                 if (!result.success) {
-                    steps.push({
-                        explanation: 'فشل الحساب',
-                        equation: result.error
-                    });
-                    return steps;
+                    return [{ explanation: 'فشل حساب فضاء الأعمدة:', equation: result.error }];
                 }
-                
+
+                const rrefDetail = matrixSolver.computeRREFWithSteps(matA.toArray().map(r => r.map(Number)));
                 steps.push({
-                    explanation: `أعمدة المحاور (تشكل الأساس): [${result.pivotColumns.map(c => c+1).join(', ')}]`,
-                    equation: `\\text{Pivot columns: } [${result.pivotColumns.map(c => c+1).join(', ')}]`
+                    explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:10px;">الطريقة 1: استخراج الأعمدة المحورية عبر RREF</h3>`,
+                    equation: ''
                 });
-                
                 steps.push({
-                    explanation: 'أساس فضاء الأعمدة',
-                    equation: `\\text{Basis of } C(A): ${result.columnSpaceBasis.map(v => 
-                        matrixSolver.utils.toLatex(v)).join(', ')}`
+                    explanation: 'نحول المصفوفة للشكل الصفّي المختزل لتحديد الأعمدة المستقلة خطياً في $A$:',
+                    equation: `A = ${matrixSolver.utils.toLatex(matA)}`
                 });
-                
+                steps.push(...rrefDetail.steps);
                 steps.push({
-                    explanation: 'البعد',
-                    equation: `\\dim(C(A)) = ${result.dimension}`
+                    explanation: `أعمدة المحاور في RREF هي [${result.pivotColumns.map(c => c + 1).join(', ') || 'لا يوجد'}]؛ نأخذ الأعمدة المقابلة من $A$ الأصلية:`,
+                    equation: `\\mathrm{Basis}(C(A)) = \\left\\{ ${result.columnSpaceBasis.map(v => matrixSolver.utils.toLatex(v)).join(', ')} \\right\\}`
                 });
-                
+
+                const gsRes = matrixSolver.gramSchmidtColumns(matA);
+                if (gsRes.success && gsRes.basis && gsRes.basis.length > 0) {
+                    steps.push({
+                        explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:14px;">الطريقة 2: الأساس المتعامد القياسي لفضاء الأعمدة (Gram-Schmidt)</h3>`,
+                        equation: ''
+                    });
+                    steps.push({
+                        explanation: `نطبق تعامد غرام-شميدت على أعمدة الأساس للحصول على أساس متعامد بالبُعد نفسه ($\\dim = ${gsRes.basis.length}$):`,
+                        equation: `Q = ${matrixSolver.utils.toLatex(gsRes.Q)}, \\quad \\dim(C(A)) = ${result.dimension}`
+                    });
+                }
+
                 return steps;
             },
             
@@ -3741,37 +3902,33 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
             generateSteps(A) {
                 const steps = [];
                 const matA = matrixSolver.utils.toMatrix(A);
-                
-                steps.push({
-                    explanation: 'حساب فضاء الصفوف (Row Space)',
-                    equation: `A = ${matrixSolver.utils.toLatex(matA)}`
-                });
-                
-                steps.push({
-                    explanation: 'فضاء الصفوف = span of rows = Column Space of A^T',
-                    equation: `R(A) = C(A^T)`
-                });
-                
                 const result = this.solve(A);
                 if (!result.success) {
-                    steps.push({
-                        explanation: 'فشل الحساب',
-                        equation: result.error
-                    });
-                    return steps;
+                    return [{ explanation: 'فشل حساب فضاء الصفوف:', equation: result.error }];
                 }
-                
+
+                const rrefDetail = matrixSolver.computeRREFWithSteps(matA.toArray().map(r => r.map(Number)));
+                const nonZeroRows = rrefDetail.rref.filter(r => r.some(v => Math.abs(v) > 1e-10));
+
                 steps.push({
-                    explanation: 'أساس فضاء الصفوف',
-                    equation: `\\text{Basis of } R(A): ${result.rowSpaceBasis.map(v => 
-                        matrixSolver.utils.toLatex(v)).join(', ')}`
+                    explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:10px;">الطريقة 1: الصفوف غير الصفرية في الشكل المختزل RREF(A)</h3>`,
+                    equation: ''
                 });
-                
+                steps.push(...rrefDetail.steps);
                 steps.push({
-                    explanation: 'البعد',
-                    equation: `\\dim(R(A)) = ${result.dimension} = \\text{rank}(A)`
+                    explanation: 'الصفوف غير الصفرية في RREF تشكل أساساً قياسياً لفضاء الصفوف $R(A)$:',
+                    equation: `\\mathrm{RREF}(A) = ${matrixSolver.utils.toLatex(rrefDetail.rref)} \\implies ${nonZeroRows.map(r => matrixSolver.utils.toLatex([r])).join(',\\; ')}`
                 });
-                
+
+                steps.push({
+                    explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:14px;">الطريقة 2: فضاء أعمدة المنقول R(A) = C(Aᵀ)</h3>`,
+                    equation: ''
+                });
+                steps.push({
+                    explanation: `بأخذ الأعمدة المحورية للمصفوفة المنقولة $A^T$ نحصل على أساس مكافئ بالبعد $\\dim(R(A)) = ${result.dimension} = \\mathrm{rank}(A)$:`,
+                    equation: `\\mathrm{Basis}(R(A)) = \\left\\{ ${result.rowSpaceBasis.map(v => matrixSolver.utils.toLatex(v)).join(', ')} \\right\\}`
+                });
+
                 return steps;
             },
             
@@ -4044,6 +4201,60 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
                     };
                 }
             }
+        },
+
+        generateMultiNormSteps(A) {
+            const matA = matrixSolver.utils.toMatrix(A);
+            const fmt = (v) => matrixSolver.utils.formatScalar(v, 6);
+            const fro = this.frobenius.solve(matA);
+            const spec = this.spectral.solve(matA);
+            const one = this.oneNorm.solve(matA);
+            const inf = this.infinityNorm.solve(matA);
+            const maxN = this.maxNorm.solve(matA);
+            const steps = [
+                {
+                    explanation: 'نحسب المعايير القياسية المتعددة للمصفوفة $A$ للمقارنة بين قياساتها المختلفة:',
+                    equation: `A = ${matrixSolver.utils.toLatex(matA)}`
+                }
+            ];
+
+            if (fro.success) {
+                steps.push({
+                    explanation: '1. معيار فروبينيوس (الجذر التربيعي لمجموع مربعات جميع العناصر):',
+                    equation: `\\|A\\|_F = \\sqrt{\\sum_{i,j} |a_{ij}|^2} = \\sqrt{${fmt(fro.sumOfSquares)}} = ${fmt(fro.norm)}`
+                });
+            }
+            if (spec.success) {
+                steps.push({
+                    explanation: '2. المعيار الطيفي / المعيار الثاني (أكبر قيمة مفردة $\\sigma_{\\max}$):',
+                    equation: `\\|A\\|_2 = \\sigma_{\\max}(A) = ${fmt(spec.norm)}`
+                });
+            }
+            if (one.success) {
+                steps.push({
+                    explanation: `3. معيار الواحد (أكبر مجموع قيم مطلقة للأعمدة، العمود #${one.maxColumn + 1}):`,
+                    equation: `\\|A\\|_1 = \\max_j \\sum_i |a_{ij}| = ${fmt(one.norm)}`
+                });
+            }
+            if (inf.success) {
+                steps.push({
+                    explanation: `4. معيار اللانهاية (أكبر مجموع قيم مطلقة للصفوف، الصف #${inf.maxRow + 1}):`,
+                    equation: `\\|A\\|_\\infty = \\max_i \\sum_j |a_{ij}| = ${fmt(inf.norm)}`
+                });
+            }
+            if (maxN.success) {
+                steps.push({
+                    explanation: `5. معيار القيمة العظمى للعنصر المفرد (عند الموضع $[${maxN.maxElementPosition[0] + 1}, ${maxN.maxElementPosition[1] + 1}]$):`,
+                    equation: `\\|A\\|_{\\max} = \\max_{i,j} |a_{ij}| = ${fmt(maxN.norm)}`
+                });
+            }
+            if (fro.success && spec.success && one.success && inf.success) {
+                steps.push({
+                    explanation: 'التحقق من متباينات تكافؤ المعايير ($\\|A\\|_2 \\le \\|A\\|_F$ و $\\|A\\|_2 \\le \\sqrt{\\|A\\|_1 \\|A\\|_\\infty}$):',
+                    equation: `${fmt(spec.norm)} \\le ${fmt(fro.norm)}, \\quad ${fmt(spec.norm)} \\le ${fmt(Math.sqrt(one.norm * inf.norm))}`
+                });
+            }
+            return steps;
         }
     },
     
@@ -4149,65 +4360,66 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
         generateSteps(A, normType = '2') {
             const steps = [];
             const matA = matrixSolver.utils.toMatrix(A);
-            
+            const fmt = (v) => matrixSolver.utils.formatScalar(v, 4);
+
             steps.push({
-                explanation: 'حساب رقم الحالة (Condition Number)',
-                equation: `A = ${matrixSolver.utils.toLatex(matA)}`
+                explanation: 'رقم الشرط يقيس حساسية حل النظام $Ax = b$ لاضطرابات الإدخال والتقريب العددي:',
+                equation: `A = ${matrixSolver.utils.toLatex(matA)}, \\quad \\kappa(A) = \\|A\\| \\cdot \\|A^{-1}\\|`
             });
-            
-            steps.push({
-                explanation: 'رقم الحالة يقيس حساسية الحل للأخطاء في البيانات',
-                equation: `\\kappa(A) = \\|A\\| \\cdot \\|A^{-1}\\|`
-            });
-            
+
             const result = this.solve(A, normType);
             if (!result.success) {
                 steps.push({
-                    explanation: result.infinite ? 'المصفوفة مفردة' : 'فشل الحساب',
+                    explanation: result.infinite ? 'المصفوفة مفردة (غير قابلة للعكس)، لذا رقم الشرط غير محدود:' : 'تعذر حساب رقم الشرط:',
                     equation: result.error
                 });
                 return steps;
             }
-            
+
             if (result.singularValues) {
                 steps.push({
-                    explanation: 'القيم المفردة',
-                    equation: `\\sigma = [${result.singularValues.map(s => s.toFixed(4)).join(', ')}]`
+                    explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:10px;">الطريقة 1: رقم الشرط الطيفي عبر القيم المفردة κ₂(A)</h3>`,
+                    equation: ''
                 });
-                
                 steps.push({
-                    explanation: 'رقم الحالة بدلالة القيم المفردة',
-                    equation: `\\kappa_2(A) = \\frac{\\sigma_{\\max}}{\\sigma_{\\min}} = \\frac{${result.largestSV.toFixed(4)}}{${result.smallestSV.toFixed(4)}} = ${result.conditionNumber.toFixed(4)}`
+                    explanation: 'القيم المفردة المستخرجة من تفكيك SVD:',
+                    equation: `\\sigma = [${result.singularValues.map(fmt).join(', ')}]`
                 });
-            } else {
                 steps.push({
-                    explanation: `||A||_${normType}`,
-                    equation: `\\|A\\| = ${result.normA.toFixed(4)}`
-                });
-                
-                steps.push({
-                    explanation: `||A⁻¹||_${normType}`,
-                    equation: `\\|A^{-1}\\| = ${result.normInvA.toFixed(4)}`
-                });
-                
-                steps.push({
-                    explanation: 'رقم الحالة',
-                    equation: `\\kappa(A) = ${result.normA.toFixed(4)} \\times ${result.normInvA.toFixed(4)} = ${result.conditionNumber.toFixed(4)}`
+                    explanation: 'نحسب النسبة بين أكبر وأصغر قيمة مفردة:',
+                    equation: `\\kappa_2(A) = \\frac{\\sigma_{\\max}}{\\sigma_{\\min}} = \\frac{${fmt(result.largestSV)}}{${fmt(result.smallestSV)}} = ${fmt(result.conditionNumber)}`
                 });
             }
-            
-            if (result.wellConditioned) {
+
+            const k1 = this.solve(matA, '1');
+            const kInf = this.solve(matA, 'inf');
+            const kFro = this.solve(matA, 'fro');
+            if (k1.success || kInf.success || kFro.success) {
                 steps.push({
-                    explanation: 'المصفوفة ذات حالة جيدة (Well-Conditioned)',
-                    equation: `\\kappa(A) < 10^{10}`
+                    explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:14px;">الطريقة 2: عبر جداء معيار المصفوفة ومعيار معكوسها (‖A‖·‖A⁻¹‖)</h3>`,
+                    equation: ''
                 });
-            } else {
-                steps.push({
-                    explanation: 'تحذير: المصفوفة سيئة الحالة (Ill-Conditioned)',
-                    equation: `\\kappa(A) \\geq 10^{10}`
-                });
+                if (kFro.success) {
+                    steps.push({
+                        explanation: 'باستخدام معيار فروبينيوس:',
+                        equation: `\\kappa_F(A) = \\|A\\|_F \\cdot \\|A^{-1}\\|_F = ${fmt(kFro.normA)} \\times ${fmt(kFro.normInvA)} = ${fmt(kFro.conditionNumber)}`
+                    });
+                }
+                if (k1.success && kInf.success) {
+                    steps.push({
+                        explanation: 'باستخدام معيار العمود الأقصى (1-Norm) ومعيار الصف الأقصى (∞-Norm):',
+                        equation: `\\kappa_1(A) = ${fmt(k1.conditionNumber)}, \\quad \\kappa_\\infty(A) = ${fmt(kInf.conditionNumber)}`
+                    });
+                }
             }
-            
+
+            steps.push({
+                explanation: result.wellConditioned
+                    ? 'تقييم الاستقرار العددي: المصفوفة حسنة الشرط (Well-Conditioned) وتحل بأنظمة مستقرة عددياً.'
+                    : 'تقييم الاستقرار العددي: تحذير — المصفوفة معتلة الشرط (Ill-Conditioned) وحساسة لأخطاء التقريب.',
+                equation: `\\kappa_2(A) = ${fmt(result.conditionNumber)}`
+            });
+
             return steps;
         },
         
@@ -4255,9 +4467,35 @@ ${scalar} A &= ${scalar} ${matrixSolver.utils.toLatex(matA)} \\\\
                     }
 
                     const steps = [
-                        { explanation: `نستخدم طريقة التحجيم والتربيع (Scaling & Squaring) بمعامل تحجيم $2^{${s}} = ${scale}$ بحيث $\\|A/2^s\\|_\\infty \\le 0.5$:`, equation: `e^A = \\left(e^{A/${scale}}\\right)^{${scale}}` },
-                        { explanation: `نحسب تقريب تايلور من الدرجة ${terms} ثم نربع ${s} مرات:`, equation: `e^A = ${matrixSolver.utils.toLatex(result)}` }
+                        { explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:10px;">الطريقة 1: التحجيم والتربيع مع متسلسلة تايلور (Scaling & Squaring)</h3>`, equation: '' },
+                        { explanation: `نختار معامل التحجيم $2^{${s}} = ${scale}$ بحيث $\\|A/2^s\\|_\\infty \\le 0.5$ لتسريع تقارب تايلور:`, equation: `e^A = \\left(e^{A/${scale}}\\right)^{${scale}}` },
+                        { explanation: `نحسب تقريب تايلور من الدرجة ${terms} لـ $e^{A/${scale}}$ ثم نربع المصفوفة ${s} مرات:`, equation: `e^A = ${matrixSolver.utils.toLatex(result)}` }
                     ];
+
+                    if (n <= 6) {
+                        try {
+                            const diag = matrixSolver.diagonalizeMatrix(matA);
+                            if (diag.success && !diag.hasComplex) {
+                                const expD = math.matrix(Array.from({ length: n }, (_, i) => Array.from({ length: n }, (__, j) => (i === j ? Math.exp(diag.eigenvalues[i]) : 0))));
+                                const specExp = math.multiply(math.multiply(diag.P, expD), diag.PInv);
+                                const methodDiff = math.norm(math.subtract(result, specExp), 'fro');
+                                steps.push({ explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:14px;">الطريقة 2: التحقق الطيفي عبر القطرنة (e^A = P e^D P⁻¹)</h3>`, equation: '' });
+                                steps.push({
+                                    explanation: `نرفع القيم الذاتية للأس الطبيعي $e^{\\lambda_i}$ ثم نعيد التركيب (التطابق مع الطريقة 1: الفرق $= ${methodDiff.toExponential(2)}$):`,
+                                    equation: `e^D = ${matrixSolver.utils.toLatex(expD)} \\implies P e^D P^{-1} = ${matrixSolver.utils.toLatex(specExp)}`
+                                });
+                            }
+                        } catch { /* non-diagonalizable fallback is normal */ }
+                    }
+
+                    const trA = Number(math.trace(matA));
+                    const detExpA = Number(math.det(result));
+                    const expectedDet = Math.exp(trA);
+                    const jacErr = Math.abs(detExpA - expectedDet);
+                    steps.push({
+                        explanation: `التحقق بصيغة جاكوبي: $\\det(e^A) = e^{\\mathrm{tr}(A)}$ (الفارق العددي $= ${jacErr.toExponential(2)}$):`,
+                        equation: `\\det(e^A) = ${matrixSolver.utils.formatScalar(detExpA)} = e^{${matrixSolver.utils.formatScalar(trA)}} = ${matrixSolver.utils.formatScalar(expectedDet)}`
+                    });
 
                     return {
                         success: true,
@@ -5601,30 +5839,67 @@ solveEigenUniversal(A, maxIterations = null) {
         const n = this.utils.getDimensions(matA).rows;
         const arrA = matA.toArray().map(r => r.map(Number));
 
+        const trA = Number(math.trace(matA));
+        const detA = Number(math.det(matA));
+        const fmt = (v) => this.utils.formatScalar(v);
+
         // Symmetric fast-path: Jacobi guaranteed real orthogonal eigenbasis
         if (this.utils.isSymmetric(matA)) {
             const jac = this.eigenvalues.jacobi.solve(matA, maxIterations || 5000);
             if (jac.success) {
-                const pairs = jac.eigenvalues.map((ev, i) => ({ ev: Math.abs(ev) < 1e-11 ? 0 : ev, vec: jac.eigenvectors[i].toArray().flat() }));
+                const pairs = jac.eigenvalues.map((ev, i) => {
+                    const rawV = jac.eigenvectors[i];
+                    const vecArr = typeof rawV?.toArray === 'function' ? rawV.toArray().flat() : Array.isArray(rawV) ? rawV.flat() : [Number(rawV)];
+                    return { ev: Math.abs(ev) < 1e-11 ? 0 : ev, vec: vecArr };
+                });
                 pairs.sort((a, b) => b.ev - a.ev);
                 const sortedVals = pairs.map(p => p.ev);
                 const sortedVecs = pairs.map(p => math.matrix(p.vec.map(x => [x])));
-                const valStr = sortedVals.map(v => this.utils.formatScalar(v)).join(', ');
+                const valStr = sortedVals.map(v => fmt(v)).join(', ');
+                const maxEigRes = pairs.reduce((mx, p, idx) => {
+                    const vCol = sortedVecs[idx];
+                    const res = math.norm(math.subtract(math.multiply(matA, vCol), math.multiply(p.ev, vCol)), 'fro');
+                    return Math.max(mx, res);
+                }, 0);
+                const sumEig = sortedVals.reduce((s, v) => s + v, 0);
+                const prodEig = sortedVals.reduce((p, v) => p * v, 1);
+
                 const steps = [
-                    { explanation: 'المصفوفة متناظرة ($A = A^T$)، لذا جميع قيمها الذاتية حقيقية ومتجهاتها الذاتية متعامدة.', equation: `A = ${this.utils.toLatex(matA)}` },
-                    { explanation: 'نطبق دورانات جاكوبي المتعامدة حتى تصفير العناصر خارج القطر:', equation: `\\lambda = \\left[${valStr}\\right]` }
+                    { explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:10px;">الطريقة 1: دورانات جاكوبي المتعامدة (Symmetric Jacobi Method)</h3>`, equation: '' },
+                    { explanation: 'المصفوفة متناظرة ($A = A^T$)، لذا جميع قيمها الذاتية حقيقية ومتجهاتها الذاتية متعامدة قياسياً:', equation: `A = ${this.utils.toLatex(matA)}` },
+                    { explanation: 'القيم الذاتية المستخرجة بجاكوبي:', equation: `\\lambda = \\left[${valStr}\\right]` }
                 ];
                 sortedVecs.forEach((v, idx) => {
                     steps.push({
-                        explanation: `المتجه الذاتي للقيمة $\\lambda_${idx + 1} = ${this.utils.formatScalar(sortedVals[idx])}$:`,
+                        explanation: `المتجه الذاتي للقيمة $\\lambda_${idx + 1} = ${fmt(sortedVals[idx])}$:`,
                         equation: `v_${idx + 1} = ${this.utils.toLatex(v)}`
                     });
                 });
+
+                if (n <= 4) {
+                    const charResSym = this.eigenvalues.characteristicPolynomial.solve(matA);
+                    if (charResSym.success) {
+                        steps.push({ explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:14px;">الطريقة 2: التحقق بالمعادلة المميزة det(λI - A) = 0</h3>`, equation: '' });
+                        steps.push({
+                            explanation: n === 2
+                                ? `لـ $2\\times 2$ تكون المعادلة $\\lambda^2 - \\mathrm{tr}(A)\\lambda + \\det(A) = 0$:`
+                                : 'المعادلة المميزة عبر خوارزمية فادييف-لوفيرييه:',
+                            equation: charResSym.polynomialLatex
+                        });
+                    }
+                }
+
+                steps.push({
+                    explanation: `التحقق الطيفي: $\\sum\\lambda_i = ${fmt(sumEig)} = \\mathrm{tr}(A)$، $\\prod\\lambda_i = ${fmt(prodEig)} = \\det(A)$، وأقصى باقي $\\max_i \\|Av_i - \\lambda_i v_i\\|_2 = ${maxEigRes.toExponential(2)}$`,
+                    equation: `A v_i = \\lambda_i v_i`
+                });
+
                 return {
                     success: true,
                     eigenvalues: sortedVals,
                     eigenvectors: sortedVecs,
                     hasComplex: false,
+                    maxResidual: maxEigRes,
                     method: 'Symmetric Jacobi Eigensolver',
                     operation: 'eigen',
                     steps,
@@ -5673,25 +5948,48 @@ solveEigenUniversal(A, maxIterations = null) {
             });
         }
 
-        const eigStr = roots.map(r => this.utils.formatScalar(r)).join(', ');
+        const eigStr = roots.map(r => fmt(r)).join(', ');
         const steps = [
-            { explanation: 'نكوّن متعددة الحدود المميزة $\\det(\\lambda I - A) = 0$:', equation: charRes.polynomialLatex },
+            { explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:10px;">الطريقة 1: المعادلة المميزة det(λI - A) = 0</h3>`, equation: '' },
+            { explanation: 'نكوّن متعددة الحدود المميزة باستخدام خوارزمية فادييف-لوفيرييه:', equation: charRes.polynomialLatex },
             { explanation: 'جذور متعددة الحدود (القيم الذاتية):', equation: `\\lambda = \\left[${eigStr}\\right]` }
         ];
 
+        if (n === 2) {
+            const disc = trA * trA - 4 * detA;
+            steps.push({ explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:14px;">الطريقة 2: الصيغة التحليلية المباشرة (الأثر والمحدد 2×2)</h3>`, equation: '' });
+            steps.push({
+                explanation: `باستخدام $\\mathrm{tr}(A) = ${fmt(trA)}$ و $\\det(A) = ${fmt(detA)}$ في القانون العام $\\lambda = \\frac{\\mathrm{tr}(A) \\pm \\sqrt{\\mathrm{tr}(A)^2 - 4\\det(A)}}{2}$ (المميز $\\Delta = ${fmt(disc)}$):`,
+                equation: `\\lambda_{1,2} = \\frac{${fmt(trA)} \\pm \\sqrt{${fmt(disc)}}}{2}`
+            });
+        }
+
+        steps.push({ explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:14px;">الفضاءات الذاتية وحساب المتجهات الذاتية</h3>`, equation: '' });
         realEigenPairs.forEach((p, idx) => {
             steps.push({
-                explanation: `نحل $(A - ${this.utils.formatScalar(p.lambda)} I)v = 0$ للحصول على المتجه الذاتي الحقيقي:`,
+                explanation: `نحل $(A - ${fmt(p.lambda)} I)v = 0$ للحصول على المتجه الذاتي الحقيقي:`,
                 equation: `v_${idx + 1} = ${this.utils.toLatex(p.vec.map(x => [x]))}`
             });
         });
 
         complexEigenvectors.forEach((p, idx) => {
             steps.push({
-                explanation: `المتجه الذاتي المركب للقيمة $\\lambda = ${this.utils.formatScalar(p.lambda)}$:`,
-                equation: `v_${idx + 1} = \\begin{bmatrix} ${this.utils.formatScalar(p.vec[0])} \\\\ ${this.utils.formatScalar(p.vec[1])} \\end{bmatrix}`
+                explanation: `المتجه الذاتي المركب للقيمة $\\lambda = ${fmt(p.lambda)}$:`,
+                equation: `v_${idx + 1} = \\begin{bmatrix} ${fmt(p.vec[0])} \\\\ ${fmt(p.vec[1])} \\end{bmatrix}`
             });
         });
+
+        if (realEigenPairs.length > 0) {
+            const maxRealRes = realEigenPairs.reduce((mx, p) => {
+                const vCol = math.matrix(p.vec.map(x => [x]));
+                const res = math.norm(math.subtract(math.multiply(matA, vCol), math.multiply(p.lambda, vCol)), 'fro');
+                return Math.max(mx, res);
+            }, 0);
+            steps.push({
+                explanation: `التحقق من المتجهات الذاتية: $\\max_i \\|Av_i - \\lambda_i v_i\\|_2 = ${maxRealRes.toExponential(2)}$`,
+                equation: `\\sum \\lambda_i = \\mathrm{tr}(A) = ${fmt(trA)}, \\quad \\prod \\lambda_i = \\det(A) = ${fmt(detA)}`
+            });
+        }
 
         if (!hasComplex && realEigenPairs.length < n) {
             steps.push({
@@ -5732,7 +6030,7 @@ diagonalizeMatrix(A) {
             return { success: false, error: 'المصفوفة تمتلك قيماً ذاتية مركبة، لذا غير قابلة للقطرنة فوق الأعداد الحقيقية $\\mathbb{R}$.' };
         }
         if (eigenRes.eigenvectors.length < n) {
-            return { success: false, error: `المصفوفة غير قابلة للقطرنة (Defective) لأن عدد المتجهات الذاتية المستقلة (${eigenRes.eigenvectors.length}) < البعد (${n}).` };
+            return { success: false, error: `المصفوفة غير قابلة للقطرنة (Defective) لأن عدد المتجهات الذاتية المستقلة (${eigenRes.eigenvectors.length}) أقل من البعد (${n}).` };
         }
 
         const arrA = matA.toArray().map(r => r.map(Number));
@@ -5914,8 +6212,37 @@ solveMatrixEquation(A, B, mode = 'AX=B') {
         if (dimA.rows === dimA.cols && Math.abs(math.det(matA)) > 1e-10) {
             const invA = math.inv(matA);
             X = math.multiply(invA, matB);
-            steps.push({ explanation: 'بما أن $A$ مربعة وقابلة للعكس، يكون الحل الفريد $X = A^{-1} B$:', equation: `A^{-1} = ${this.utils.toLatex(invA)}` });
-            steps.push({ explanation: 'النتيجة النهائية:', equation: `X = ${this.utils.toLatex(X)}` });
+            steps.push({ explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:10px;">الطريقة 1: الضرب في المعكوس (X = A⁻¹B)</h3>`, equation: '' });
+            steps.push({ explanation: 'بما أن $A$ مربعة وقابلة للعكس، نحسب $A^{-1}$ ثم نضرب في $B$:', equation: `A^{-1} = ${this.utils.toLatex(invA)} \\implies X = ${this.utils.toLatex(X)}` });
+
+            const luRes = this.decompositions.lu.solve(matA);
+            if (luRes.success) {
+                const n = dimA.rows;
+                const pCols = dimB.cols;
+                const bArr = matB.toArray();
+                const xFromLU = Array.from({ length: n }, () => Array(pCols).fill(0));
+                const pbMat = math.multiply(luRes.P, matB).toArray();
+                for (let col = 0; col < pCols; col++) {
+                    const y = new Array(n).fill(0);
+                    for (let i = 0; i < n; i++) {
+                        let s = 0;
+                        for (let j = 0; j < i; j++) s += luRes.L.get([i, j]) * y[j];
+                        y[i] = (pbMat[i][col] - s) / luRes.L.get([i, i]);
+                    }
+                    for (let i = n - 1; i >= 0; i--) {
+                        let s = 0;
+                        for (let j = i + 1; j < n; j++) s += luRes.U.get([i, j]) * xFromLU[j][col];
+                        xFromLU[i][col] = (y[i] - s) / luRes.U.get([i, i]);
+                    }
+                }
+                const xLUMat = math.matrix(xFromLU);
+                const diffMethods = math.norm(math.subtract(X, xLUMat), 'fro');
+                steps.push({ explanation: `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--modal-border); padding-bottom:5px; margin-top:14px;">الطريقة 2: تفكيك PA = LU والتعويض متعدد الأعمدة</h3>`, equation: '' });
+                steps.push({
+                    explanation: `نحل $Ly_k = Pb_k$ ثم $Ux_k = y_k$ لكل عمود من $B$ (الفرق بين الطريقتين $= ${diffMethods.toExponential(2)}$):`,
+                    equation: `X = ${this.utils.toLatex(xLUMat)}`
+                });
+            }
         } else {
             const pinvRes = this.computePseudoinverse(matA);
             if (!pinvRes.success) return pinvRes;
@@ -5924,6 +6251,10 @@ solveMatrixEquation(A, B, mode = 'AX=B') {
         }
 
         const residual = math.norm(math.subtract(math.multiply(matA, X), matB), 'fro');
+        steps.push({
+            explanation: `التحقق العددي من الحل: $\\|AX - B\\|_F = ${residual.toExponential(2)}$`,
+            equation: `A X = B`
+        });
         return {
             success: true,
             mode: 'AX=B',
@@ -5950,29 +6281,49 @@ classifyMatrixType(A) {
         const isZeroMat = arr.every(r => r.every(v => Math.abs(v) < 1e-10));
         if (isZeroMat) tags.push('مصفوفة صفرية (Zero)');
 
+        let isIdentity = false;
+        let isDiagonal = false;
+        let isUpperTriangular = false;
+        let isLowerTriangular = false;
+        let isSymmetric = false;
+        let isSkewSymmetric = false;
+        let isOrthogonal = false;
+        let isSingular = false;
+        let isSPD = false;
+
         if (isSq) {
-            if (this.utils.isIdentity(matA)) tags.push('مصفوفة الوحدة (Identity)');
-            if (this.utils.isDiagonal(matA)) tags.push('قطرية (Diagonal)');
-            if (this.utils.isUpperTriangular(matA)) tags.push('مثلثية عليا (Upper Triangular)');
-            if (this.utils.isLowerTriangular(matA)) tags.push('مثلثية سفلى (Lower Triangular)');
-            if (this.utils.isSymmetric(matA)) tags.push('متناظرة (Symmetric: Aᵀ = A)');
-            const isSkew = arr.every((r, i) => r.every((v, j) => Math.abs(v + arr[j][i]) < 1e-10));
-            if (isSkew && !isZeroMat) tags.push('تخالفية التناظر (Skew-Symmetric: Aᵀ = -A)');
-            if (this.utils.isOrthogonal(matA)) tags.push('متعامدة (Orthogonal: AᵀA = I)');
+            isIdentity = this.utils.isIdentity(matA);
+            isDiagonal = this.utils.isDiagonal(matA);
+            isUpperTriangular = this.utils.isUpperTriangular(matA);
+            isLowerTriangular = this.utils.isLowerTriangular(matA);
+            isSymmetric = this.utils.isSymmetric(matA);
+            isSkewSymmetric = arr.every((r, i) => r.every((v, j) => Math.abs(v + arr[j][i]) < 1e-10));
+            isOrthogonal = this.utils.isOrthogonal(matA);
+
+            if (isIdentity) tags.push('مصفوفة الوحدة (Identity)');
+            if (isDiagonal) tags.push('قطرية (Diagonal)');
+            if (isUpperTriangular) tags.push('مثلثية عليا (Upper Triangular)');
+            if (isLowerTriangular) tags.push('مثلثية سفلى (Lower Triangular)');
+            if (isSymmetric) tags.push('متناظرة (Symmetric: Aᵀ = A)');
+            if (isSkewSymmetric && !isZeroMat) tags.push('تخالفية التناظر (Skew-Symmetric: Aᵀ = -A)');
+            if (isOrthogonal) tags.push('متعامدة (Orthogonal: AᵀA = I)');
 
             const A2 = math.multiply(matA, matA);
             if (math.norm(math.subtract(A2, matA), 'fro') < 1e-8) tags.push('متساوية القوى (Idempotent: A² = A)');
             if (math.norm(math.subtract(A2, this.utils.identity(dim.rows)), 'fro') < 1e-8) tags.push('ارتدادية (Involutory: A² = I)');
 
             const det = math.det(matA);
-            tags.push(Math.abs(det) > 1e-10 ? `قابلة للعكس (det = ${this.utils.formatScalar(det)})` : 'مفردة / شاذة (Singular: det = 0)');
+            isSingular = Math.abs(det) <= 1e-10;
+            tags.push(!isSingular ? `قابلة للعكس (det = ${this.utils.formatScalar(det)})` : 'مفردة / شاذة (Singular: det = 0)');
 
-            if (this.utils.isSymmetric(matA)) {
+            if (isSymmetric) {
                 const jac = this.eigenvalues.jacobi.solve(matA);
                 if (jac.success) {
                     const ev = jac.eigenvalues;
-                    if (ev.every(x => x > 1e-10)) tags.push('موجبة التعريف (Positive Definite)');
-                    else if (ev.every(x => x >= -1e-10)) tags.push('موجبة شبه التعريف (Positive Semi-Definite)');
+                    if (ev.every(x => x > 1e-10)) {
+                        isSPD = true;
+                        tags.push('موجبة التعريف (Positive Definite)');
+                    } else if (ev.every(x => x >= -1e-10)) tags.push('موجبة شبه التعريف (Positive Semi-Definite)');
                     else if (ev.every(x => x < -1e-10)) tags.push('سالبة التعريف (Negative Definite)');
                     else tags.push('غير محددة الإشارة (Indefinite)');
                 }
@@ -5983,6 +6334,17 @@ classifyMatrixType(A) {
         return {
             success: true,
             tags,
+            isSquare: isSq,
+            isZero: isZeroMat,
+            isIdentity,
+            isDiagonal,
+            isUpperTriangular,
+            isLowerTriangular,
+            isSymmetric,
+            isSkewSymmetric,
+            isOrthogonal,
+            isSingular,
+            isSPD,
             steps,
             latex: {
                 result: `\\text{${tags.slice(0, 4).join(' ، ')}}`
@@ -6010,6 +6372,8 @@ computeDensity(A) {
             zeroCount: zeros,
             density: densityPct,
             sparsity: sparsityPct,
+            densityPercent: Number(densityPct.toFixed(2)),
+            sparsityPercent: Number(sparsityPct.toFixed(2)),
             steps: [
                 { explanation: `إجمالي العناصر: ${total}، غير الصفرية: ${nonZero}، الصفرية: ${zeros}`, equation: `\\text{Density} = \\frac{${nonZero}}{${total}} = ${densityPct.toFixed(2)}\\%` },
                 { explanation: 'نسبة التناثر (Sparsity):', equation: `\\text{Sparsity} = ${sparsityPct.toFixed(2)}\\%` }
@@ -6166,6 +6530,31 @@ solve(data) {
             case 'matrixType': resultObj = this.classifyMatrixType(A); break;
             case 'density': resultObj = this.computeDensity(A); break;
             case 'matrixExpression': resultObj = this.evaluateMatrixExpression(data.expression || data.customOperation, A, B, C, param); break;
+            case 'comprehensive_analysis': {
+                const comp = matrixAnalysis.comprehensiveAnalysis(A);
+                if (comp.success) {
+                    const a = comp.analyses;
+                    const compSteps = [
+                        { explanation: `الأبعاد: ${a.dimensions.rows}×${a.dimensions.cols}، والرتبة: ${a.rank.rank} (Nullity = ${a.rank.nullity})`, equation: `\\mathrm{rank}(A) = ${a.rank.rank}, \\quad \\mathrm{nullity}(A) = ${a.rank.nullity}` }
+                    ];
+                    if (a.determinant) {
+                        compSteps.push({ explanation: `المحدد والأثر: det(A) = ${this.utils.formatScalar(a.determinant.value)}`, equation: `\\det(A) = ${this.utils.formatScalar(a.determinant.value)}${a.trace ? `, \\quad \\mathrm{tr}(A) = ${this.utils.formatScalar(a.trace.value)}` : ''}` });
+                    }
+                    if (a.eigenvalues) {
+                        compSteps.push({ explanation: 'القيم الذاتية:', equation: `\\lambda = [${a.eigenvalues.formatted.join(', ')}]` });
+                    }
+                    resultObj = {
+                        success: true,
+                        analyses: a,
+                        rank: a.rank.rank,
+                        steps: compSteps,
+                        latex: { result: `\\mathrm{rank}(A) = ${a.rank.rank}${a.determinant ? `, \\quad \\det(A) = ${this.utils.formatScalar(a.determinant.value)}` : ''}` }
+                    };
+                } else {
+                    resultObj = comp;
+                }
+                break;
+            }
 
             default: throw new Error(`العملية ${data.operation} غير معروفة`);
         }
@@ -6266,20 +6655,17 @@ solve(data) {
 
         const meta = this.getOperationMeta(data.operation);
         const technicalSteps = this.collectTechnicalSteps(data.operation, { ...context, param });
-        let steps = this.composeNarrativeSteps(meta, context, technicalSteps);
-
-        if (Array.isArray(resultObj.steps) && resultObj.steps.length) {
-            const mapped = resultObj.steps.map((step) => {
+        const resultSteps = Array.isArray(resultObj.steps) && resultObj.steps.length
+            ? resultObj.steps.map((step) => {
                 if (typeof step === 'string') return { explanation: step };
                 const explanation = step.explanation || step.text || '';
                 let equation = '';
                 if (step.equation) equation = step.equation.replace(/^\$\$|\$\$/g, '').trim();
                 else if (step.latex) equation = step.latex.replace(/^\$\$|\$\$/g, '').trim();
                 return { explanation, equation };
-            }).filter(s => s.explanation || s.equation);
-
-            if (mapped.length) steps = steps.concat(mapped);
-        }
+            }).filter(s => s.explanation || s.equation)
+            : [];
+        let steps = this.composeNarrativeSteps(meta, context, technicalSteps.concat(resultSteps));
 
         if (!steps.length) steps = [{ explanation: 'تم الحساب بنجاح.' }];
 
